@@ -167,10 +167,7 @@ struct SubscriptionsView: View {
                                         // two-unit `.relative` style wrapped on the iPhone Duo
                                         // outer display once the side control strip took its
                                         // share of the width.
-                                        updatedSubtitle(profile)
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                            .lineLimit(1)
+                                        rowSubtitle(profile)
                                     }
                                     Spacer(minLength: 0)
                                 }
@@ -299,6 +296,34 @@ private extension SubscriptionsView {
             "subscriptions.row.updated \(profile.lastUpdated, format: Self.updatedFormat)",
             comment: "Subscription row subtitle; %@ = relative time, e.g. '25 min. ago'",
         )
+    }
+
+    /// "Updated 25 min. ago", plus a clock badge naming the cadence for a
+    /// profile that auto-updates — without it the setting is invisible outside
+    /// the edit sheet. URL-less profiles never auto-update (nothing to
+    /// refetch), so they never show the badge regardless of stored value.
+    ///
+    /// Stays on one line: where the badge's title doesn't fit beside the
+    /// timestamp (the iPhone Duo outer display), it drops to the bare clock
+    /// rather than truncating the timestamp.
+    private func rowSubtitle(_ profile: Profile) -> some View {
+        HStack(spacing: 6) {
+            updatedSubtitle(profile)
+                .layoutPriority(1)
+            if profile.updateInterval != .manual, !profile.url.isEmpty {
+                let title = LocalizedStringKey(profile.updateInterval.titleKey)
+                ViewThatFits(in: .horizontal) {
+                    Label(title, systemImage: "clock.arrow.circlepath")
+                    Image(systemName: "clock.arrow.circlepath")
+                }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(Text(title))
+                .accessibilityIdentifier("subscriptions.row.autoUpdateBadge")
+            }
+        }
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .lineLimit(1)
     }
 
     private var emptySubscriptionCard: some View {
@@ -524,62 +549,6 @@ private struct AddSubscriptionSheet: View {
                         }
                     }
                     .disabled(name.isEmpty || url.isEmpty || submitting)
-                }
-            }
-        }
-    }
-}
-
-/// Edits a subscription's name and update URL only — the YAML body is left
-/// untouched (that's what the pencil / `YamlEditorView` is for). A changed URL
-/// is picked up on the next refresh, not immediately. See issue #182.
-private struct EditSubscriptionInfoSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(SubscriptionService.self) private var service
-    let profile: Profile
-    @Binding var error: String?
-    @State private var name: String
-    @State private var url: String
-
-    init(profile: Profile, error: Binding<String?>) {
-        self.profile = profile
-        _error = error
-        _name = State(initialValue: profile.name)
-        _url = State(initialValue: profile.url)
-    }
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    TextField("subscriptions.add.field.name", text: $name)
-                        .accessibilityIdentifier("subscriptions.editInfo.nameField")
-                    TextField("subscriptions.add.field.url", text: $url)
-                        .keyboardType(.URL)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled(true)
-                        .accessibilityIdentifier("subscriptions.editInfo.urlField")
-                } footer: {
-                    Text("subscriptions.editInfo.footer")
-                }
-            }
-            .navigationTitle("subscriptions.editInfo.nav.title")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("common.cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("subscriptions.editInfo.button.save") {
-                        do {
-                            try service.updateInfo(profile, name: name, url: url)
-                            dismiss()
-                        } catch {
-                            self.error = error.localizedDescription
-                        }
-                    }
-                    .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
-                    .accessibilityIdentifier("subscriptions.editInfo.saveButton")
                 }
             }
         }

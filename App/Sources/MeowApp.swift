@@ -22,8 +22,18 @@ struct MeowApp: App {
         }
         .modelContainer(AppModelContainer.shared.container)
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active {
+            // Only `.background` stops the auto-update timer. `.inactive`
+            // fires for transient interruptions (notification centre, app
+            // switcher preview) where tearing the timer down and rebuilding
+            // it would run a due-check on every glance at the app.
+            switch phase {
+            case .active:
                 WidgetReloader.appDidBecomeActive()
+                appModel.profileAutoUpdater.start()
+            case .background:
+                appModel.profileAutoUpdater.stop()
+            default:
+                break
             }
         }
     }
