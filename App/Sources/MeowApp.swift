@@ -17,6 +17,7 @@ struct MeowApp: App {
                 .environment(appModel.utilityTrafficChart)
                 .environment(appModel.utilityLogs)
                 .environment(appModel.iCloudRelayStore)
+                .environment(appModel.appIconStore)
                 .task { await appModel.bootstrap() }
         }
         .modelContainer(AppModelContainer.shared.container)

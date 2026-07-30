@@ -23,6 +23,8 @@ final class AppModel {
     #if os(iOS)
         /// Mirrors `iCloud Drive › meow` into CloudKit for the Apple TV.
         let iCloudRelayUploader: ICloudRelayUploader
+        /// Home Screen icon choice; tvOS has no alternate icons to pick.
+        let appIconStore: AppIconStore
     #endif
 
     /// Monotonically bumped each time `replaySelectedProxies()` finishes a pass
@@ -63,6 +65,7 @@ final class AppModel {
         iCloudRelayStore = ICloudRelayStore()
         #if os(iOS)
             iCloudRelayUploader = ICloudRelayUploader()
+            appIconStore = AppIconStore()
         #endif
         ipcBridge.onTrafficDidUpdate = { [utilityTrafficChart] snapshot in
             utilityTrafficChart.ingest(snapshot)
