@@ -109,21 +109,21 @@ jobs:
           # 0. Sign embedded Frameworks
           if [ -d "$APP_PATH/Frameworks" ]; then
             echo "Signing embedded Frameworks..."
-            find "$APP_PATH/Frameworks" -type d -name "*.framework" -exec codesign -f -s "$CERT_NAME" {} \;
-            find "$APP_PATH/Frameworks" -type f -name "*.dylib" -exec codesign -f -s "$CERT_NAME" {} \;
+            find "$APP_PATH/Frameworks" -type d -name "*.framework" -exec codesign -f -s "$CERT_NAME" --generate-entitlement-der {} \;
+            find "$APP_PATH/Frameworks" -type f -name "*.dylib" -exec codesign -f -s "$CERT_NAME" --generate-entitlement-der {} \;
           fi
 
           # 1. Sign the PacketTunnel Extension
           if [ -d "$EXT_PATH" ]; then
             echo "Signing PacketTunnel..."
             cp 证书/描述文件.mobileprovision "$EXT_PATH/embedded.mobileprovision"
-            codesign -f -s "$CERT_NAME" --entitlements ext_entitlements.plist "$EXT_PATH"
+            codesign -f -s "$CERT_NAME" --entitlements ext_entitlements.plist --generate-entitlement-der "$EXT_PATH"
           fi
           
           # 2. Sign the Main App
           echo "Signing Main App..."
           cp 证书/描述文件.mobileprovision "$APP_PATH/embedded.mobileprovision"
-          codesign -f -s "$CERT_NAME" --entitlements entitlements.plist "$APP_PATH"
+          codesign -f -s "$CERT_NAME" --entitlements entitlements.plist --generate-entitlement-der "$APP_PATH"
           
           # 3. Package into IPA
           mkdir -p build/output/Payload
