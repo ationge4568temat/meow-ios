@@ -106,6 +106,13 @@ jobs:
           APP_ID=$(/usr/libexec/PlistBuddy -c "Print :application-identifier" entitlements.plist)
           /usr/libexec/PlistBuddy -c "Set :application-identifier ${APP_ID}.PacketTunnel" ext_entitlements.plist
           
+          # 0. Sign embedded Frameworks
+          if [ -d "$APP_PATH/Frameworks" ]; then
+            echo "Signing embedded Frameworks..."
+            find "$APP_PATH/Frameworks" -type d -name "*.framework" -exec codesign -f -s "$CERT_NAME" {} \;
+            find "$APP_PATH/Frameworks" -type f -name "*.dylib" -exec codesign -f -s "$CERT_NAME" {} \;
+          fi
+
           # 1. Sign the PacketTunnel Extension
           if [ -d "$EXT_PATH" ]; then
             echo "Signing PacketTunnel..."
