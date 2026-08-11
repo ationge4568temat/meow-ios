@@ -1,7 +1,7 @@
 name: meow-ios
 
 options:
-  bundleIdPrefix: ssadtyer.top
+  bundleIdPrefix: com.6p9pp.uen6
   deploymentTarget:
     iOS: "17.0"
   createIntermediateGroups: true
@@ -61,7 +61,7 @@ targets:
         NSCameraUsageDescription: "meow uses the camera to scan Shadowsocks server QR codes."
         ITSAppUsesNonExemptEncryption: false
         CFBundleURLTypes:
-          - CFBundleURLName: ssadtyer.top.deeplink
+          - CFBundleURLName: com.6p9pp.uen6.deeplink
             CFBundleURLSchemes:
               - meow
     entitlements:
@@ -72,10 +72,10 @@ targets:
         com.apple.developer.networking.networkextension:
           - packet-tunnel-provider
         keychain-access-groups:
-          - $(AppIdentifierPrefix)ssadtyer.top
+          - $(AppIdentifierPrefix)com.6p9pp.uen6
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: ssadtyer.top
+        PRODUCT_BUNDLE_IDENTIFIER: com.6p9pp.uen6
         # Alternate Home Screen icons (Settings → App Icon). Each name is an
         # .appiconset in Assets.xcassets; actool injects the matching
         # CFBundleIcons entries into the processed Info.plist.
@@ -205,10 +205,10 @@ targets:
         com.apple.developer.networking.networkextension:
           - packet-tunnel-provider
         keychain-access-groups:
-          - $(AppIdentifierPrefix)ssadtyer.top
+          - $(AppIdentifierPrefix)com.6p9pp.uen6
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: ssadtyer.top.PacketTunnel
+        PRODUCT_BUNDLE_IDENTIFIER: com.6p9pp.uen6.PacketTunnel
         CODE_SIGN_ENTITLEMENTS: PacketTunnel/PacketTunnel.entitlements
         GENERATE_INFOPLIST_FILE: NO
         CLANG_ENABLE_MODULES: YES

@@ -72,13 +72,6 @@ jobs:
       - name: Archive Unsigned
         run: |
           set -o pipefail
-          BUNDLE_ID=$(strings "证书/描述文件.mobileprovision" | grep -A1 "<key>application-identifier</key>" | grep string | sed 's/<[^>]*>//g' | tr -d '[:space:]' | cut -d. -f2-)
-          echo "Using Bundle ID from profile: $BUNDLE_ID"
-          
-          # Replace the placeholder ssadtyer.top with the actual bundle ID from the profile
-          # This ensures Info.plist matches the profile exactly, preventing App Group sandbox errors!
-          sed -i '' "s/ssadtyer.top/$BUNDLE_ID/g" project.yml
-          
           xcodegen generate
           
           xcodebuild archive \
