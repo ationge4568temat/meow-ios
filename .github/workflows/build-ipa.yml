@@ -1,6 +1,8 @@
 name: Build and Sign IPA
 
 on:
+  push:
+    branches: [ dev ]
   workflow_dispatch:
 
 jobs:
@@ -59,10 +61,10 @@ jobs:
 
       - name: Build MeowCore.xcframework
         run: scripts/build-rust.sh
-        
+
       - name: Generate Xcode Project
         run: xcodegen generate
-        
+
       - name: Archive
         run: |
           xcodebuild archive \
