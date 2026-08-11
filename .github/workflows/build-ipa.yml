@@ -69,15 +69,9 @@ jobs:
       - name: Generate Xcode Project
         run: xcodegen generate
 
-      - name: Archive
+      - name: Archive Unsigned
         run: |
           set -o pipefail
-          BUNDLE_ID=$(strings "证书/描述文件.mobileprovision" | grep -A1 "<key>application-identifier</key>" | grep string | sed 's/<[^>]*>//g' | tr -d '[:space:]' | cut -d. -f2-)
-          echo "Using Bundle ID from profile: $BUNDLE_ID"
-          
-          # Replace the placeholder ssadtyer.top with the actual bundle ID from the profile
-          # (only in project.yml to fix xcodebuild mismatch)
-          sed -i '' "s/ssadtyer.top/$BUNDLE_ID/g" project.yml
           xcodegen generate
           
           xcodebuild archive \
@@ -86,45 +80,48 @@ jobs:
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath build/meow-ios.xcarchive \
-            CODE_SIGN_STYLE=Manual \
-            DEVELOPMENT_TEAM="$TEAM_ID" \
-            PROVISIONING_PROFILE_SPECIFIER="$(strings "证书/描述文件.mobileprovision" | grep -A1 "<key>UUID</key>" | grep string | sed 's/<[^>]*>//g' | tr -d '[:space:]')"
+            CODE_SIGNING_ALLOWED=NO
 
-      - name: Export IPA
+      - name: Manual Package and Sign
         run: |
-          cat <<'PLIST_EOF' > exportOptions.plist
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>development</string>
-              <key>teamID</key>
-              <string>TEAM_ID_PLACEHOLDER</string>
-              <key>signingStyle</key>
-              <string>manual</string>
-              <key>provisioningProfiles</key>
-              <dict>
-                  <key>BUNDLE_ID_PLACEHOLDER</key>
-                  <string>UUID_PLACEHOLDER</string>
-                  <key>BUNDLE_ID_PLACEHOLDER.PacketTunnel</key>
-                  <string>UUID_PLACEHOLDER</string>
-              </dict>
-          </dict>
-          </plist>
-          PLIST_EOF
+          set -e
+          APP_PATH="build/meow-ios.xcarchive/Products/Applications/meow-ios.app"
+          EXT_PATH="$APP_PATH/PlugIns/PacketTunnel.appex"
           
-          PROFILE_UUID=$(strings "证书/描述文件.mobileprovision" | grep -A1 "<key>UUID</key>" | grep string | sed 's/<[^>]*>//g' | tr -d '[:space:]')
-          BUNDLE_ID=$(strings "证书/描述文件.mobileprovision" | grep -A1 "<key>application-identifier</key>" | grep string | sed 's/<[^>]*>//g' | tr -d '[:space:]' | cut -d. -f2-)
+          # Find the certificate name from keychain
+          CERT_NAME=$(security find-identity -v -p codesigning $RUNNER_TEMP/app-signing.keychain-db | grep -o '".*"' | head -n 1 | tr -d '"')
+          echo "Found Certificate: $CERT_NAME"
           
-          sed -i '' "s/TEAM_ID_PLACEHOLDER/$TEAM_ID/g" exportOptions.plist
-          sed -i '' "s/BUNDLE_ID_PLACEHOLDER/$BUNDLE_ID/g" exportOptions.plist
-          sed -i '' "s/UUID_PLACEHOLDER/$PROFILE_UUID/g" exportOptions.plist
+          if [ -z "$CERT_NAME" ]; then
+            echo "Error: No codesigning identity found in the provided p12 file!"
+            exit 1
+          fi
+
+          # Extract entitlements from the mobileprovision
+          security cms -D -i 证书/描述文件.mobileprovision > profile.plist
+          /usr/libexec/PlistBuddy -x -c "Print :Entitlements" profile.plist > entitlements.plist
           
-          xcodebuild -exportArchive \
-            -archivePath build/meow-ios.xcarchive \
-            -exportOptionsPlist exportOptions.plist \
-            -exportPath build/output
+          # We must modify the App Group in the entitlements to match what the user wants if needed,
+          # but the profile already has group.ssadtyer.top. We just use the profile's exact entitlements.
+
+          # 1. Sign the PacketTunnel Extension
+          if [ -d "$EXT_PATH" ]; then
+            echo "Signing PacketTunnel..."
+            cp 证书/描述文件.mobileprovision "$EXT_PATH/embedded.mobileprovision"
+            codesign -f -s "$CERT_NAME" --entitlements entitlements.plist "$EXT_PATH"
+          fi
+          
+          # 2. Sign the Main App
+          echo "Signing Main App..."
+          cp 证书/描述文件.mobileprovision "$APP_PATH/embedded.mobileprovision"
+          codesign -f -s "$CERT_NAME" --entitlements entitlements.plist "$APP_PATH"
+          
+          # 3. Package into IPA
+          mkdir -p build/output/Payload
+          cp -r "$APP_PATH" build/output/Payload/
+          cd build/output
+          zip -qr meow-ios-signed.ipa Payload
+          echo "Successfully created meow-ios-signed.ipa"
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
