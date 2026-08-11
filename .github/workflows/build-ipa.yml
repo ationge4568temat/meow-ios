@@ -1,0 +1,107 @@
+name: Build and Sign IPA
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-ipa:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust (stable + iOS targets)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios,aarch64-apple-ios-sim
+
+      - name: Cache cargo registry, git, and build target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            core/rust/meow-ios-ffi/target
+          key: cargo-${{ runner.os }}-${{ hashFiles('core/rust/meow-ios-ffi/Cargo.lock') }}
+          restore-keys: |
+            cargo-${{ runner.os }}-
+
+      - name: Install Tools
+        run: |
+          brew install xcodegen xcbeautify
+
+      - name: Setup Provisioning Profile & Certificate
+        env:
+          P12_PATH: "证书/证书文件.p12"
+          PP_PATH: "证书/描述文件.mobileprovision"
+          PWD_PATH: "证书/密码.txt"
+        run: |
+          # Extract Team ID dynamically
+          TEAM_ID=$(strings "$PP_PATH" | grep -A1 "<key>TeamIdentifier</key>" | grep string | sed 's/<[^>]*>//g' | tr -d '[:space:]')
+          echo "Extracted Team ID: $TEAM_ID"
+          echo "TEAM_ID=$TEAM_ID" >> $GITHUB_ENV
+          
+          P12_PASSWORD=$(cat "$PWD_PATH")
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+
+          # Create and unlock temporary keychain
+          security create-keychain -p "$P12_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$P12_PASSWORD" $KEYCHAIN_PATH
+
+          # Import certificate to keychain
+          security import "$P12_PATH" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$P12_PASSWORD" $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+
+          # Apply provisioning profile
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp "$PP_PATH" ~/Library/MobileDevice/Provisioning\ Profiles/
+
+      - name: Build MeowCore.xcframework
+        run: scripts/build-rust.sh
+        
+      - name: Generate Xcode Project
+        run: xcodegen generate
+        
+      - name: Archive
+        run: |
+          xcodebuild archive \
+            -project meow-ios.xcodeproj \
+            -scheme meow-ios \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/meow-ios.xcarchive \
+            CODE_SIGN_STYLE=Automatic \
+            DEVELOPMENT_TEAM="$TEAM_ID" \
+            | xcbeautify
+
+      - name: Export IPA
+        run: |
+          cat <<'PLIST_EOF' > exportOptions.plist
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>development</string>
+              <key>teamID</key>
+              <string>TEAM_ID_PLACEHOLDER</string>
+              <key>signingStyle</key>
+              <string>automatic</string>
+          </dict>
+          </plist>
+          PLIST_EOF
+          
+          sed -i '' "s/TEAM_ID_PLACEHOLDER/$TEAM_ID/g" exportOptions.plist
+          
+          xcodebuild -exportArchive \
+            -archivePath build/meow-ios.xcarchive \
+            -exportOptionsPlist exportOptions.plist \
+            -exportPath build/output \
+            | xcbeautify
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: meow-ios-ipa
+          path: build/output/*.ipa
