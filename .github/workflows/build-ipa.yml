@@ -38,7 +38,7 @@ jobs:
           PWD_PATH: "证书/密码.txt"
         run: |
           # Extract Team ID dynamically
-          TEAM_ID=$(strings "$PP_PATH" | grep -A1 "<key>TeamIdentifier</key>" | grep string | sed 's/<[^>]*>//g' | tr -d '[:space:]')
+          TEAM_ID=$(strings "$PP_PATH" | grep -A2 "<key>TeamIdentifier</key>" | grep string | sed 's/<[^>]*>//g' | tr -d '[:space:]')
           echo "Extracted Team ID: $TEAM_ID"
           echo "TEAM_ID=$TEAM_ID" >> $GITHUB_ENV
           
