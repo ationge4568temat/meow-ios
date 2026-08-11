@@ -67,15 +67,24 @@ jobs:
 
       - name: Archive
         run: |
+          set -o pipefail
+          BUNDLE_ID=$(strings "证书/描述文件.mobileprovision" | grep -A1 "<key>application-identifier</key>" | grep string | sed 's/<[^>]*>//g' | tr -d '[:space:]' | cut -d. -f2-)
+          echo "Using Bundle ID from profile: $BUNDLE_ID"
+          
+          # Replace the placeholder ssadtyer.top with the actual bundle ID from the profile
+          # (only in project.yml to fix xcodebuild mismatch)
+          sed -i '' "s/ssadtyer.top/$BUNDLE_ID/g" project.yml
+          xcodegen generate
+          
           xcodebuild archive \
             -project meow-ios.xcodeproj \
             -scheme meow-ios \
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath build/meow-ios.xcarchive \
-            CODE_SIGN_STYLE=Automatic \
+            CODE_SIGN_STYLE=Manual \
             DEVELOPMENT_TEAM="$TEAM_ID" \
-            | xcbeautify
+            PROVISIONING_PROFILE_SPECIFIER="$(strings "证书/描述文件.mobileprovision" | grep -A1 "<key>UUID</key>" | grep string | sed 's/<[^>]*>//g' | tr -d '[:space:]')"
 
       - name: Export IPA
         run: |
@@ -89,18 +98,29 @@ jobs:
               <key>teamID</key>
               <string>TEAM_ID_PLACEHOLDER</string>
               <key>signingStyle</key>
-              <string>automatic</string>
+              <string>manual</string>
+              <key>provisioningProfiles</key>
+              <dict>
+                  <key>BUNDLE_ID_PLACEHOLDER</key>
+                  <string>UUID_PLACEHOLDER</string>
+                  <key>BUNDLE_ID_PLACEHOLDER.PacketTunnel</key>
+                  <string>UUID_PLACEHOLDER</string>
+              </dict>
           </dict>
           </plist>
           PLIST_EOF
           
+          PROFILE_UUID=$(strings "证书/描述文件.mobileprovision" | grep -A1 "<key>UUID</key>" | grep string | sed 's/<[^>]*>//g' | tr -d '[:space:]')
+          BUNDLE_ID=$(strings "证书/描述文件.mobileprovision" | grep -A1 "<key>application-identifier</key>" | grep string | sed 's/<[^>]*>//g' | tr -d '[:space:]' | cut -d. -f2-)
+          
           sed -i '' "s/TEAM_ID_PLACEHOLDER/$TEAM_ID/g" exportOptions.plist
+          sed -i '' "s/BUNDLE_ID_PLACEHOLDER/$BUNDLE_ID/g" exportOptions.plist
+          sed -i '' "s/UUID_PLACEHOLDER/$PROFILE_UUID/g" exportOptions.plist
           
           xcodebuild -exportArchive \
             -archivePath build/meow-ios.xcarchive \
             -exportOptionsPlist exportOptions.plist \
-            -exportPath build/output \
-            | xcbeautify
+            -exportPath build/output
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
