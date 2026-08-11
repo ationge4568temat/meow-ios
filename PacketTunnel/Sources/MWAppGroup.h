@@ -1,7 +1,7 @@
 #pragma once
 #import <Foundation/Foundation.h>
 
-extern NSString *const MWAppGroupIdentifier;
+extern NSString * MWAppGroupIdentifier(void);
 
 @interface MWAppGroup : NSObject
 @property (class, nonatomic, readonly) NSString *identifier;

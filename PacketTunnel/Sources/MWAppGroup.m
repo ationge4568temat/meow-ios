@@ -1,17 +1,38 @@
 #import "MWAppGroup.h"
+#import <Security/Security.h>
 
-NSString *const MWAppGroupIdentifier = @"group.ssadtyer.top";
-
+NSString * MWAppGroupIdentifier(void) {
+    static NSString *groupIdentifier = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        SecTaskRef task = SecTaskCreateFromSelf(kCFAllocatorDefault);
+        if (task) {
+            CFTypeRef value = SecTaskCopyValueForEntitlement(task, CFSTR("com.apple.security.application-groups"), NULL);
+            if (value && CFGetTypeID(value) == CFArrayGetTypeID()) {
+                NSArray *groups = (__bridge NSArray *)value;
+                if (groups.count > 0) {
+                    groupIdentifier = groups.firstObject;
+                }
+            }
+            if (value) CFRelease(value);
+            CFRelease(task);
+        }
+        if (!groupIdentifier) {
+            groupIdentifier = @"group.ssadtyer.top";
+        }
+    });
+    return groupIdentifier;
+}
 @implementation MWAppGroup
 
 + (NSString *)identifier {
-    return MWAppGroupIdentifier;
+    return MWAppGroupIdentifier();
 }
 
 + (NSURL *)containerURL {
     NSURL *url = [[NSFileManager defaultManager]
-        containerURLForSecurityApplicationGroupIdentifier:MWAppGroupIdentifier];
-    NSAssert(url, @"App Group container unavailable — entitlement missing '%@'", MWAppGroupIdentifier);
+        containerURLForSecurityApplicationGroupIdentifier:MWAppGroupIdentifier()];
+    NSAssert(url, @"App Group container unavailable — entitlement missing '%@'", MWAppGroupIdentifier());
     return url;
 }
 
@@ -32,8 +53,8 @@ NSString *const MWAppGroupIdentifier = @"group.ssadtyer.top";
 }
 
 + (NSUserDefaults *)defaults {
-    NSUserDefaults *d = [[NSUserDefaults alloc] initWithSuiteName:MWAppGroupIdentifier];
-    NSAssert(d, @"Shared UserDefaults unavailable for suite '%@'", MWAppGroupIdentifier);
+    NSUserDefaults *d = [[NSUserDefaults alloc] initWithSuiteName:MWAppGroupIdentifier()];
+    NSAssert(d, @"Shared UserDefaults unavailable for suite '%@'", MWAppGroupIdentifier());
     return d;
 }
 

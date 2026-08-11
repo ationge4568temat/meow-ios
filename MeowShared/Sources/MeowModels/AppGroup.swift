@@ -1,9 +1,20 @@
 import Foundation
-
+import Security
 /// Shared App Group identifier used by the app and the packet-tunnel extension.
 public enum AppGroup {
-    public static let identifier = "group.ssadtyer.top"
-
+    public static let identifier: String = {
+        let fallback = "group.ssadtyer.top"
+        let task = SecTaskCreateFromSelf(kCFAllocatorDefault)
+        guard let task = task else { return fallback }
+        defer { CFRelease(task) }
+        
+        guard let value = SecTaskCopyValueForEntitlement(task, "com.apple.security.application-groups" as CFString, nil),
+              let groups = value as? [String],
+              let group = groups.first else {
+            return fallback
+        }
+        return group
+    }()
     public static var containerURL: URL {
         guard let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier) else {
             fatalError("App Group container unavailable — entitlements missing '\(identifier)'")
