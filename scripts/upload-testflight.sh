@@ -95,7 +95,7 @@ ASC_KEY_PATH="${ASC_KEY_PATH:-$HOME/AuthKey_9FU24T97RY.p8}"
 # App Store provisioning profile UUIDs already installed under
 # ~/Library/MobileDevice/Provisioning Profiles/. Override via env if
 # the profiles get rotated. These must be App Store profiles for the
-# current com.tangzixiang.meow[.PacketTunnel] ids under team 32B45SMMQL
+# current com.david.fkad[.PacketTunnel] ids under team 32B45SMMQL
 # ("meow AppStore" / "meow PT AppStore"). The old UUIDs here were for the
 # retired io.github.madeye.meow ids on team SK4GFF6AHN; uploads only kept
 # working because exportArchive silently fell back to the right profile by
@@ -158,9 +158,9 @@ cat >"$EXPORT_PLIST" <<EOF
     <string>Apple Distribution</string>
     <key>provisioningProfiles</key>
     <dict>
-        <key>com.tangzixiang.meow</key>
+        <key>com.david.fkad</key>
         <string>$APP_PROFILE</string>
-        <key>com.tangzixiang.meow.PacketTunnel</key>
+        <key>com.david.fkad.PacketTunnel</key>
         <string>$PT_PROFILE</string>
     </dict>
     <key>uploadSymbols</key>

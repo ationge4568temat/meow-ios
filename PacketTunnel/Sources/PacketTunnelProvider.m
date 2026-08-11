@@ -33,7 +33,7 @@ static os_log_t gLog;
 
 + (void)initialize {
     if (self == [PacketTunnelProvider class]) {
-        gLog = os_log_create("com.tangzixiang.meow.PacketTunnel", "provider");
+        gLog = os_log_create("com.david.fkad.PacketTunnel", "provider");
     }
 }
 
@@ -45,7 +45,7 @@ static os_log_t gLog;
                                                     QOS_CLASS_USER_INITIATED,
                                                     0);
         _engineControlQueue = dispatch_queue_create(
-            "com.tangzixiang.meow.PacketTunnel.engine-control", attr);
+            "com.david.fkad.PacketTunnel.engine-control", attr);
     }
     return self;
 }

@@ -35,7 +35,7 @@ final class DailyTrafficAccumulator {
     private let baselineStore: TrafficBaselineStoring
     private let calendar: Calendar
     private let now: () -> Date
-    private let log = Logger(subsystem: "com.tangzixiang.meow.app", category: "daily-traffic")
+    private let log = Logger(subsystem: "com.david.fkad.app", category: "daily-traffic")
 
     private var lastUp: Int64 = 0
     private var lastDown: Int64 = 0

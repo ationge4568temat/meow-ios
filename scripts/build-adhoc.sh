@@ -64,7 +64,7 @@ EXPORT_PLIST="$ROOT/build/ExportOptions-adhoc.plist"
 
 # Ad Hoc profiles installed on this Mac (UUIDs from
 # ~/Library/MobileDevice/Provisioning Profiles/). These must be Ad Hoc
-# profiles for the CURRENT bundle ids (com.tangzixiang.meow[.PacketTunnel])
+# profiles for the CURRENT bundle ids (com.david.fkad[.PacketTunnel])
 # under team 32B45SMMQL — "meow AdHoc" / "meow PT AdHoc". The old UUIDs here
 # were for the retired io.github.madeye.meow ids on team SK4GFF6AHN and made
 # exportArchive fall back to App Store profiles ("not an iOS Ad Hoc profile").
@@ -124,9 +124,9 @@ cat >"$EXPORT_PLIST" <<EOF
     <string>Apple Distribution</string>
     <key>provisioningProfiles</key>
     <dict>
-        <key>com.tangzixiang.meow</key>
+        <key>com.david.fkad</key>
         <string>$APP_PROFILE</string>
-        <key>com.tangzixiang.meow.PacketTunnel</key>
+        <key>com.david.fkad.PacketTunnel</key>
         <string>$PT_PROFILE</string>
     </dict>
     <key>uploadSymbols</key>

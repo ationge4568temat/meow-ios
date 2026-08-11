@@ -20,7 +20,7 @@ from pathlib import Path
 import jwt
 import requests
 
-BUNDLE_ID = "com.tangzixiang.meow"
+BUNDLE_ID = "com.david.fkad"
 API_KEY_JSON = Path("/Users/mlv/.appstoreconnect/api_key.json")
 REPO_ROOT = Path(__file__).resolve().parent.parent
 METADATA_ROOT = REPO_ROOT / "metadata"

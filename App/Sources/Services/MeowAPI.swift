@@ -73,7 +73,7 @@ final class MeowAPI: @unchecked Sendable {
     private let usesInjectedWebSocketTransport: Bool
     // DIAGNOSTIC: remove once Logs/Connections views are stable in v1.0.
     // Mirrors the ingress-instrumentation pattern kept around #54.
-    private let log = Logger(subsystem: "com.tangzixiang.meow.app", category: "meow-api")
+    private let log = Logger(subsystem: "com.david.fkad.app", category: "meow-api")
 
     private enum URLBuildError: Error {
         case invalidComponents(endpoint: URL)

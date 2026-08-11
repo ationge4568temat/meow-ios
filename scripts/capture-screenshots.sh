@@ -27,7 +27,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$ROOT"
 
-BUNDLE_ID="com.tangzixiang.meow"
+BUNDLE_ID="com.david.fkad"
 APP="${APP:-$(find build/DerivedData-snapshot/Build/Products -name 'meow-ios.app' -path '*Release-iphonesimulator*' 2>/dev/null | head -1)}"
 OUT_ROOT="$ROOT/fastlane/screenshots"
 

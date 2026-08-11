@@ -2,7 +2,7 @@ default_platform(:ios)
 
 # ASC credentials come from prod.env (gitignored) — `source prod.env` before
 # running fastlane. The key must belong to the Tangzixiang provider (team
-# 32B45SMMQL): keys from other providers cannot see com.tangzixiang.meow.
+# 32B45SMMQL): keys from other providers cannot see com.david.fkad.
 def asc_api_key
   %w[ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_PATH].each do |var|
     UI.user_error!("#{var} is not set — run `source prod.env` first") if ENV[var].to_s.empty?

@@ -1,6 +1,6 @@
 #import "MWAppGroup.h"
 
-NSString *const MWAppGroupIdentifier = @"group.com.tangzixiang.meow";
+NSString *const MWAppGroupIdentifier = @"group.com.david.fkad";
 
 @implementation MWAppGroup
 

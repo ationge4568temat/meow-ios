@@ -40,7 +40,7 @@ import os
 ///     manual edit of the manifest) is respected rather than silently
 ///     overwritten.
 enum GeoAssetStager {
-    private static let log = Logger(subsystem: "com.tangzixiang.meow", category: "geo-asset-stager")
+    private static let log = Logger(subsystem: "com.david.fkad", category: "geo-asset-stager")
 
     /// File names that must match `meow_config::default_*_path` in the FFI.
     /// Changing any of these will break the engine's discovery; keep in

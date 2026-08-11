@@ -38,7 +38,7 @@ static const int kLocalDNSPort = 1053;
 
 + (void)initialize {
     if (self == [MWTunnelEngine class]) {
-        gLog = os_log_create("com.tangzixiang.meow.PacketTunnel", "engine");
+        gLog = os_log_create("com.david.fkad.PacketTunnel", "engine");
     }
 }
 
