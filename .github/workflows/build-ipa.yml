@@ -72,6 +72,13 @@ jobs:
       - name: Archive Unsigned
         run: |
           set -o pipefail
+          BUNDLE_ID=$(strings "证书/描述文件.mobileprovision" | grep -A1 "<key>application-identifier</key>" | grep string | sed 's/<[^>]*>//g' | tr -d '[:space:]' | cut -d. -f2-)
+          echo "Using Bundle ID from profile: $BUNDLE_ID"
+          
+          # Replace the placeholder ssadtyer.top with the actual bundle ID from the profile
+          # This ensures Info.plist matches the profile exactly, preventing App Group sandbox errors!
+          sed -i '' "s/ssadtyer.top/$BUNDLE_ID/g" project.yml
+          
           xcodegen generate
           
           xcodebuild archive \
@@ -101,14 +108,16 @@ jobs:
           security cms -D -i 证书/描述文件.mobileprovision > profile.plist
           /usr/libexec/PlistBuddy -x -c "Print :Entitlements" profile.plist > entitlements.plist
           
-          # We must modify the App Group in the entitlements to match what the user wants if needed,
-          # but the profile already has group.ssadtyer.top. We just use the profile's exact entitlements.
-
+          # Create a copy for the extension and append .PacketTunnel to the application-identifier
+          cp entitlements.plist ext_entitlements.plist
+          APP_ID=$(/usr/libexec/PlistBuddy -c "Print :application-identifier" entitlements.plist)
+          /usr/libexec/PlistBuddy -c "Set :application-identifier ${APP_ID}.PacketTunnel" ext_entitlements.plist
+          
           # 1. Sign the PacketTunnel Extension
           if [ -d "$EXT_PATH" ]; then
             echo "Signing PacketTunnel..."
             cp 证书/描述文件.mobileprovision "$EXT_PATH/embedded.mobileprovision"
-            codesign -f -s "$CERT_NAME" --entitlements entitlements.plist "$EXT_PATH"
+            codesign -f -s "$CERT_NAME" --entitlements ext_entitlements.plist "$EXT_PATH"
           fi
           
           # 2. Sign the Main App
