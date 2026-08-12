@@ -77,9 +77,8 @@ final class MvpManager {
                     try appModel.subscriptionService.writeActiveConfig(activeProfile)
                     await appModel.vpnManager.connect()
                     
-                    // Surface any core errors that occurred during connect
                     if let err = appModel.vpnManager.lastError {
-                        showToast("连接失败: \\(err)", type: .error, duration: 4.0)
+                        showToast("连接失败: \(err)", type: .error, duration: 4.0)
                     }
                 } catch {
                     showToast("启动防追踪失败: \(error.localizedDescription)", type: .error)
