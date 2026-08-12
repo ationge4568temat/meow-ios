@@ -1,0 +1,99 @@
+name: TestFlight Auto-Deploy
+
+on:
+  push:
+    branches:
+      - main # Or whatever branch you want to trigger releases from
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: macos-15
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Inject Private Config
+        run: |
+          echo "Downgrading Swift version..."
+          sed -i '' 's/swift-tools-version: 6.2/swift-tools-version: 6.0/g' MeowShared/Package.swift
+          
+          echo "Replacing Bundle IDs and App Groups..."
+          LC_ALL=C find . -type f -not -path "*/\.git/*" -not -path "*/\.github/*" -exec sed -i '' 's/com.tangzixiang.meow/com.david.fkad/g' {} +
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '^26.0'
+
+      - name: Install dependencies
+        run: |
+          brew install xcodegen
+
+      - name: Setup App Store Connect API Key
+        env:
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          TEAM_ID: ${{ secrets.TEAM_ID }}
+        run: |
+          # Xcode looks for API keys in ~/.appstoreconnect/private_keys/
+          mkdir -p ~/.appstoreconnect/private_keys/
+          echo "$ASC_PRIVATE_KEY" > ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          
+          # Create ExportOptions.plist for TestFlight upload
+          cat <<EOF > ExportOptions.plist
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>app-store-connect</string>
+              <key>destination</key>
+              <string>upload</string>
+              <key>manageAppVersionAndBuildNumber</key>
+              <true/>
+              <key>teamID</key>
+              <string>${TEAM_ID}</string>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Build Rust Core
+        run: |
+          ./scripts/build-rust.sh
+
+      - name: Generate Xcode Project
+        run: |
+          xcodegen generate
+
+      - name: Archive Project
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          TEAM_ID: ${{ secrets.TEAM_ID }}
+        run: |
+          xcodebuild archive \
+            -project meow-ios.xcodeproj \
+            -scheme meow-ios \
+            -configuration Release \
+            -archivePath build/meow-ios.xcarchive \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 \
+            -authenticationKeyID $ASC_KEY_ID \
+            -authenticationKeyIssuerID $ASC_ISSUER_ID \
+            DEVELOPMENT_TEAM=$TEAM_ID
+
+      - name: Export and Upload to TestFlight
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath build/meow-ios.xcarchive \
+            -exportOptionsPlist ExportOptions.plist \
+            -exportPath build/output \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 \
+            -authenticationKeyID $ASC_KEY_ID \
+            -authenticationKeyIssuerID $ASC_ISSUER_ID
