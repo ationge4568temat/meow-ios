@@ -2,8 +2,11 @@ import MeowModels
 import NetworkExtension
 import SwiftData
 import SwiftUI
+import UIKit
+import UniformTypeIdentifiers
 
 
+@MainActor
 struct MvpHeaderBar: View {
     @Bindable var mvpManager: MvpManager
     let onExportLogs: () -> Void
@@ -14,10 +17,10 @@ struct MvpHeaderBar: View {
     @State private var lastTapTime: Date?
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .center) {
             // Centered Title with tap gesture
             Text("Block Ad")
-                .font(.system(size: 16, weight: .bold))
+                .font(.system(size: 18, weight: .bold))
                 .foregroundColor(MvpTheme.textPrimary)
                 .contentShape(Rectangle())
                 .onTapGesture {
@@ -69,6 +72,7 @@ struct MvpHeaderBar: View {
     }
 }
 
+@MainActor
 struct AdGuardToggleSwitch: View {
     let isOn: Bool
     let action: () -> Void
@@ -121,34 +125,55 @@ struct AdGuardToggleSwitch: View {
     }
 }
 
+@MainActor
 struct MvpShieldHero: View {
     let appModel: AppModel
     let activeProfile: Profile?
     @Bindable var mvpManager: MvpManager
 
-    private var isStart: Bool {
-        appModel.vpnManager.stage == .connected
+    private var isSwitchOn: Bool {
+        switch appModel.vpnManager.stage {
+        case .connected, .connecting, .preparing: return true
+        default: return false
+        }
+    }
+
+    private var statusTitle: String {
+        switch appModel.vpnManager.stage {
+        case .connected: return "防护已开启"
+        case .connecting, .preparing: return "防护启动中..."
+        default: return "防护已暂停"
+        }
+    }
+
+    private var statusSubtitle: String {
+        switch appModel.vpnManager.stage {
+        case .connected: return "防护运行中 · 智能拦截与隐私保护"
+        case .connecting, .preparing: return "正在连接本地代理服务..."
+        default: return "点击上方按钮开启防护"
+        }
     }
 
     var body: some View {
         VStack(spacing: 12) {
-            AdGuardToggleSwitch(isOn: isStart) {
+            AdGuardToggleSwitch(isOn: isSwitchOn) {
                 mvpManager.toggleShield(appModel: appModel, activeProfile: activeProfile)
             }
 
-            Text(isStart ? "防护已开启" : "防护已暂停")
+            Text(statusTitle)
                 .font(.system(size: 19, weight: .bold))
                 .foregroundColor(MvpTheme.textPrimary)
-                .animation(.easeInOut(duration: 0.2), value: isStart)
+                .animation(.easeInOut(duration: 0.2), value: appModel.vpnManager.stage)
 
-            Text(isStart ? "防护运行中 · 智能拦截与隐私保护" : "点击上方按钮开启防护")
+            Text(statusSubtitle)
                 .font(.system(size: 12, weight: .medium))
                 .foregroundColor(MvpTheme.textSecondary)
-                .animation(.easeInOut(duration: 0.2), value: isStart)
+                .animation(.easeInOut(duration: 0.2), value: appModel.vpnManager.stage)
         }
     }
 }
 
+@MainActor
 struct MvpQuickInfoCards: View {
     let appModel: AppModel
 
@@ -221,6 +246,7 @@ struct MvpQuickInfoCards: View {
     }
 }
 
+@MainActor
 struct MvpProfileCard: View {
     let appModel: AppModel
     let activeProfile: Profile?
@@ -257,7 +283,22 @@ struct MvpProfileCard: View {
     }
     
     private var ruleCountStr: String {
-        return activeProfile != nil ? "已加载" : "0 条"
+        guard let yaml = activeProfile?.yamlContent else { return "0 条" }
+        var count = 0
+        var inRules = false
+        yaml.enumerateLines { line, stop in
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            if trimmed.hasPrefix("rules:") {
+                inRules = true
+            } else if inRules {
+                if trimmed.hasPrefix("-") {
+                    count += 1
+                } else if !trimmed.isEmpty && !trimmed.hasPrefix("#") {
+                    stop = true
+                }
+            }
+        }
+        return "\(count) 条"
     }
 
     var body: some View {
@@ -317,6 +358,24 @@ struct MvpProfileCard: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
                     .background(MvpTheme.dangerColor.opacity(0.08))
+                    .cornerRadius(8)
+                })
+            } else if activeProfile != nil {
+                Button(action: {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                        mvpManager.showInputArea = false
+                    }
+                }, label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.up")
+                            .font(.system(size: 12, weight: .bold))
+                        Text("收起")
+                            .font(.system(size: 13, weight: .semibold))
+                    }
+                    .foregroundColor(MvpTheme.textSecondary)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(MvpTheme.borderColor.opacity(0.6))
                     .cornerRadius(8)
                 })
             }
@@ -430,6 +489,7 @@ struct MvpProfileCard: View {
 
 // MARK: - Main MvpView
 
+@MainActor
 struct MvpView: View {
     @Environment(AppModel.self) private var appModel
     @Environment(\.modelContext) private var modelContext
@@ -441,10 +501,7 @@ struct MvpView: View {
     @State private var showingLogExporter = false
     @State private var exportingLogs = false
 
-    // Because MvpProfileCard decides State 1 or 2 based on whether it has an activeProfile,
-    // and resetting doesn't truly delete it yet, we use mvpManager.showInputArea to override it.
-    private var activeProfile: Profile? {
-        if mvpManager.showInputArea { return nil }
+    private var actualProfile: Profile? {
         return profiles.first(where: \.isSelected) ?? profiles.first
     }
 
@@ -453,24 +510,33 @@ struct MvpView: View {
             MvpTheme.bgPrimary
                 .ignoresSafeArea()
 
-            ScrollView(.vertical, showsIndicators: false) {
-                VStack(spacing: 16) {
-                    MvpHeaderBar(
-                        mvpManager: mvpManager,
-                        onExportLogs: { Task { await exportLogs() } },
-                        exportingLogs: exportingLogs,
-                    )
-                    Spacer(minLength: 12)
-                    MvpShieldHero(appModel: appModel, activeProfile: activeProfile, mvpManager: mvpManager)
-                    Spacer(minLength: 12)
-                    MvpQuickInfoCards(appModel: appModel)
-                    MvpProfileCard(appModel: appModel, activeProfile: activeProfile, mvpManager: mvpManager)
-                    Spacer(minLength: 16)
+            GeometryReader { geometry in
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(spacing: 0) {
+                        MvpHeaderBar(
+                            mvpManager: mvpManager,
+                            onExportLogs: { Task { await exportLogs() } },
+                            exportingLogs: exportingLogs
+                        )
+                        .padding(.top, 24)
+
+                        Spacer(minLength: 32)
+
+                        MvpShieldHero(appModel: appModel, activeProfile: actualProfile, mvpManager: mvpManager)
+
+                        Spacer(minLength: 32)
+
+                        VStack(spacing: 16) {
+                            MvpQuickInfoCards(appModel: appModel)
+                            MvpProfileCard(appModel: appModel, activeProfile: actualProfile, mvpManager: mvpManager)
+                        }
+                        .padding(.bottom, 24)
+                    }
+                    .padding(.horizontal, 20)
+                    .frame(minHeight: geometry.size.height)
+                    .frame(maxWidth: 600)
+                    .frame(maxWidth: .infinity, alignment: .center)
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
-                .frame(maxWidth: 600)
-                .frame(maxWidth: .infinity, alignment: .center)
             }
 
             if let toastMsg = mvpManager.toastMessage {
@@ -484,7 +550,7 @@ struct MvpView: View {
             defaultFilename: "blockad-log-\(logTimestamp).log",
             onCompletion: { _ in
                 logExportDocument = nil
-            },
+            }
         )
     }
 
