@@ -117,7 +117,7 @@ final class MvpManager {
 
         do {
             try await appModel.subscriptionService.refresh(activeProfile)
-            showToast("配置集已同步至最新", type: .success)
+            showToast("已同步至最新", type: .success)
         } catch {
             showToast("更新失败: \(error.localizedDescription)", type: .error)
         }
