@@ -8,7 +8,13 @@ struct MeowApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            Group {
+                if MvpManager.shared.isMvpMode {
+                    MvpView()
+                } else {
+                    ContentView()
+                }
+            }
                 .environment(appModel)
                 .environment(appModel.vpnManager)
                 .environment(appModel.meowAPI)
