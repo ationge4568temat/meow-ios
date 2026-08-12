@@ -1,0 +1,536 @@
+import MeowModels
+import NetworkExtension
+import SwiftData
+import SwiftUI
+
+
+struct MvpHeaderBar: View {
+    @Bindable var mvpManager: MvpManager
+    let onExportLogs: () -> Void
+    let exportingLogs: Bool
+
+    // Tap counter for 5-tap easter egg to switch back to full meow-ios mode
+    @State private var minimalTapCount: Int = 0
+    @State private var lastTapTime: Date?
+
+    var body: some View {
+        ZStack {
+            // Centered Title with tap gesture
+            Text("Block Ad")
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(MvpTheme.textPrimary)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    handleMinimalTap()
+                }
+
+            HStack {
+                Spacer()
+
+                Button(action: {
+                    onExportLogs()
+                }, label: {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(MvpTheme.borderColor.opacity(0.6))
+                            .frame(width: 32, height: 32)
+
+                        if exportingLogs {
+                            ProgressView()
+                                .scaleEffect(0.7)
+                        } else {
+                            Image(systemName: "doc.plaintext")
+                                .font(.system(size: 15))
+                                .foregroundColor(MvpTheme.textPrimary)
+                        }
+                    }
+                })
+                .disabled(exportingLogs)
+            }
+        }
+        .frame(height: 36)
+    }
+
+    private func handleMinimalTap() {
+        let now = Date()
+        if let last = lastTapTime, now.timeIntervalSince(last) > 2.0 {
+            minimalTapCount = 0
+        }
+        lastTapTime = now
+        minimalTapCount += 1
+
+        if minimalTapCount >= 5 {
+            minimalTapCount = 0
+            withAnimation {
+                mvpManager.isMvpMode = false
+            }
+            mvpManager.showToast("已切换至高级模式", type: .info)
+        }
+    }
+}
+
+struct AdGuardToggleSwitch: View {
+    let isOn: Bool
+    let action: () -> Void
+
+    var body: some View {
+        ZStack {
+            // Track
+            Capsule()
+                .fill(isOn ? MvpTheme.activeColor : MvpTheme.inactiveGray)
+                .frame(width: 130, height: 56)
+
+            // Thumb container
+            HStack {
+                if isOn { Spacer() }
+                
+                // Thumb
+                ZStack {
+                    Circle()
+                        .fill(Color.white)
+                        .frame(width: 86, height: 86)
+                        .shadow(color: Color.black.opacity(0.12), radius: 12, x: 0, y: 4)
+                        .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 1)
+
+                    // Active Checkmark
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 38, weight: .bold))
+                        .foregroundColor(MvpTheme.activeColor)
+                        .opacity(isOn ? 1 : 0)
+                        .scaleEffect(isOn ? 1 : 0.5)
+
+                    // Inactive Circle
+                    Circle()
+                        .stroke(MvpTheme.inactiveGray, lineWidth: 4)
+                        .frame(width: 24, height: 24)
+                        .opacity(isOn ? 0 : 1)
+                        .scaleEffect(isOn ? 0.5 : 1)
+                }
+                .offset(x: isOn ? 12 : -12)
+                
+                if !isOn { Spacer() }
+            }
+            .frame(width: 130 + 24) // accommodate the oversized thumb
+        }
+        .padding(.vertical, 24)
+        .onTapGesture {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                action()
+            }
+        }
+    }
+}
+
+struct MvpShieldHero: View {
+    let appModel: AppModel
+    let activeProfile: Profile?
+    @Bindable var mvpManager: MvpManager
+
+    private var isStart: Bool {
+        appModel.vpnManager.stage == .connected
+    }
+
+    var body: some View {
+        VStack(spacing: 12) {
+            AdGuardToggleSwitch(isOn: isStart) {
+                mvpManager.toggleShield(appModel: appModel, activeProfile: activeProfile)
+            }
+
+            Text(isStart ? "广告防护已开启" : "广告防护已暂停")
+                .font(.system(size: 19, weight: .bold))
+                .foregroundColor(MvpTheme.textPrimary)
+                .animation(.easeInOut(duration: 0.2), value: isStart)
+
+            Text(isStart ? "防护运行中 · 智能拦截与隐私保护" : "点击上方按钮开启防护")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(MvpTheme.textSecondary)
+                .animation(.easeInOut(duration: 0.2), value: isStart)
+        }
+    }
+}
+
+struct MvpQuickInfoCards: View {
+    let appModel: AppModel
+
+    private var isStart: Bool {
+        appModel.vpnManager.stage == .connected
+    }
+
+    private var coreStatusText: String {
+        switch appModel.vpnManager.stage {
+        case .connected: return "正常"
+        case .connecting, .preparing: return "启动中"
+        default: return "停用"
+        }
+    }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            buildInfoItem(
+                iconName: "shield.fill",
+                title: "防护状态",
+                value: isStart ? "已开启" : "未开启",
+                isActive: isStart
+            )
+
+            buildInfoItem(
+                iconName: "cpu",
+                title: "内核状态",
+                value: coreStatusText,
+                isActive: isStart
+            )
+        }
+    }
+
+    private func buildInfoItem(iconName: String, title: String, value: String, isActive: Bool) -> some View {
+        let bgFill = isActive ? MvpTheme.activeColor.opacity(0.12) : Color(hex: "#E5E7EB").opacity(0.6)
+        let iconColor = isActive ? MvpTheme.activeColor : MvpTheme.textSecondary
+        
+        return HStack(spacing: 10) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(bgFill)
+                    .frame(width: 32, height: 32)
+
+                Image(systemName: iconName)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(iconColor)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(MvpTheme.textSecondary)
+
+                Text(value)
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundColor(MvpTheme.textPrimary)
+                    .lineLimit(1)
+            }
+
+            Spacer()
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(MvpTheme.cardBg)
+        .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(MvpTheme.borderColor, lineWidth: 1)
+        )
+    }
+}
+
+struct MvpProfileCard: View {
+    let appModel: AppModel
+    let activeProfile: Profile?
+    @Bindable var mvpManager: MvpManager
+
+    @State private var urlInput: String = ""
+
+    private var hasProfile: Bool {
+        activeProfile != nil && !mvpManager.showInputArea
+    }
+
+    private var activeProfileTitle: String {
+        guard let profile = activeProfile else { return "Block Ad" }
+        if let name = profile.name, !name.isEmpty {
+            return name
+        }
+        return "Block Ad"
+    }
+    
+    private var updateDateStr: String {
+        if let date = activeProfile?.updatedAt {
+            let df = DateFormatter()
+            if Calendar.current.isDateInToday(date) {
+                df.dateFormat = "'今天' HH:mm"
+            } else if Calendar.current.isDateInYesterday(date) {
+                df.dateFormat = "'昨天' HH:mm"
+            } else {
+                df.dateFormat = "MM-dd HH:mm"
+            }
+            return df.string(from: date)
+        }
+        return "未知"
+    }
+    
+    private var ruleCountStr: String {
+        return "\(activeProfile?.selectedFileIds.count ?? 0) 条"
+    }
+
+    var body: some View {
+        VStack(spacing: 14) {
+            buildProfileHeader()
+
+            Divider()
+                .background(MvpTheme.borderColor)
+
+            VStack(spacing: 0) {
+                if hasProfile {
+                    buildLoadedState()
+                        .transition(.opacity)
+                } else {
+                    buildImportState()
+                        .transition(.opacity)
+                }
+            }
+            .frame(height: 108) // Match fixed height from HTML preview
+        }
+        .padding(16)
+        .background(MvpTheme.cardBg)
+        .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(MvpTheme.borderColor, lineWidth: 1)
+        )
+    }
+
+    private func buildProfileHeader() -> some View {
+        HStack {
+            HStack(spacing: 8) {
+                Image(systemName: "slider.horizontal.3")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(MvpTheme.textPrimary)
+
+                Text("规则配置集")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(MvpTheme.textPrimary)
+            }
+
+            Spacer()
+
+            if hasProfile {
+                Button(action: {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                        mvpManager.showInputArea = true 
+                    }
+                }, label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "trash")
+                            .font(.system(size: 12))
+                        Text("重置")
+                            .font(.system(size: 13, weight: .semibold))
+                    }
+                    .foregroundColor(MvpTheme.dangerColor)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(MvpTheme.dangerColor.opacity(0.08))
+                    .cornerRadius(8)
+                })
+            }
+        }
+        .frame(height: 28)
+    }
+
+    private func buildImportState() -> some View {
+        VStack(spacing: 12) {
+            ZStack(alignment: .trailing) {
+                TextField("粘贴或输入规则配置链接", text: $urlInput)
+                    .font(.system(size: 13))
+                    .padding(.leading, 14)
+                    .padding(.trailing, 40)
+                    .padding(.vertical, 12)
+                    .background(MvpTheme.inputBg)
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(MvpTheme.borderColor, lineWidth: 1)
+                    )
+
+                Button(action: {
+                    if let pasted = UIPasteboard.general.string {
+                        urlInput = pasted.trimmingCharacters(in: .whitespacesAndNewlines)
+                    }
+                }, label: {
+                    Image(systemName: "doc.on.clipboard")
+                        .font(.system(size: 15))
+                        .foregroundColor(MvpTheme.textSecondary)
+                        .frame(width: 32, height: 32)
+                        .contentShape(Rectangle())
+                })
+                .padding(.trailing, 4)
+            }
+
+            Button(action: {
+                Task {
+                    await mvpManager.importConfig(url: urlInput, appModel: appModel)
+                }
+            }, label: {
+                HStack(spacing: 8) {
+                    if mvpManager.isImporting {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(0.8)
+                    } else {
+                        Image(systemName: "square.and.arrow.down.fill")
+                            .font(.system(size: 14))
+                        Text("下载并导入配置")
+                            .font(.system(size: 14, weight: .bold))
+                    }
+                }
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(MvpTheme.activeColor)
+                .cornerRadius(12)
+                .shadow(color: MvpTheme.activeColor.opacity(0.2), radius: 12, x: 0, y: 4)
+            })
+            .disabled(mvpManager.isImporting)
+        }
+    }
+
+    private func buildLoadedState() -> some View {
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(activeProfileTitle)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(MvpTheme.textPrimary)
+                    .lineLimit(1)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("更新于：\(updateDateStr)")
+                    Text("规则：\(ruleCountStr)")
+                }
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(MvpTheme.textSecondary)
+            }
+
+            Spacer()
+
+            Button(action: {
+                if let profile = activeProfile {
+                    Task {
+                        await mvpManager.updateSubscription(appModel: appModel, activeProfile: profile)
+                    }
+                }
+            }, label: {
+                HStack(spacing: 6) {
+                    if mvpManager.isUpdating {
+                        ProgressView()
+                            .scaleEffect(0.7)
+                    } else {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .font(.system(size: 12, weight: .bold))
+                    }
+                    Text("更新")
+                        .font(.system(size: 13, weight: .bold))
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(MvpTheme.activeColor)
+                .cornerRadius(12)
+                .shadow(color: MvpTheme.activeColor.opacity(0.2), radius: 12, x: 0, y: 4)
+            })
+        }
+    }
+}
+
+// MARK: - Main MvpView
+
+struct MvpView: View {
+    @Environment(AppModel.self) private var appModel
+    @Environment(\.modelContext) private var modelContext
+    @Query private var profiles: [Profile]
+
+    @State private var mvpManager = MvpManager.shared
+
+    @State private var logExportDocument: MvpLogExportDocument?
+    @State private var showingLogExporter = false
+    @State private var exportingLogs = false
+
+    // Because MvpProfileCard decides State 1 or 2 based on whether it has an activeProfile,
+    // and resetting doesn't truly delete it yet, we use mvpManager.showInputArea to override it.
+    private var activeProfile: Profile? {
+        if mvpManager.showInputArea { return nil }
+        return profiles.first(where: \.isSelected) ?? profiles.first
+    }
+
+    var body: some View {
+        ZStack {
+            MvpTheme.bgPrimary
+                .ignoresSafeArea()
+
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: 16) {
+                    MvpHeaderBar(
+                        mvpManager: mvpManager,
+                        onExportLogs: { Task { await exportLogs() } },
+                        exportingLogs: exportingLogs,
+                    )
+                    Spacer(minLength: 12)
+                    MvpShieldHero(appModel: appModel, activeProfile: activeProfile, mvpManager: mvpManager)
+                    Spacer(minLength: 12)
+                    MvpQuickInfoCards(appModel: appModel)
+                    MvpProfileCard(appModel: appModel, activeProfile: activeProfile, mvpManager: mvpManager)
+                    Spacer(minLength: 16)
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .frame(maxWidth: 600)
+                .frame(maxWidth: .infinity, alignment: .center)
+            }
+
+            if let toastMsg = mvpManager.toastMessage {
+                buildToastOverlay(msg: toastMsg)
+            }
+        }
+        .fileExporter(
+            isPresented: $showingLogExporter,
+            document: logExportDocument,
+            contentType: .plainText,
+            defaultFilename: "blockad-log-\(logTimestamp).log",
+            onCompletion: { _ in
+                logExportDocument = nil
+            },
+        )
+    }
+
+    private func buildToastOverlay(msg: String) -> some View {
+        VStack {
+            Spacer()
+            HStack(spacing: 8) {
+                Image(systemName: toastIconName(for: mvpManager.toastType))
+                    .foregroundColor(.white)
+                    .font(.system(size: 14, weight: .semibold))
+                Text(msg)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.white)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(MvpTheme.toastBg)
+            .cornerRadius(12)
+            .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
+            .padding(.bottom, 24)
+            .transition(.move(edge: .bottom).combined(with: .opacity))
+        }
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: msg)
+    }
+
+    private func toastIconName(for type: MvpToastType) -> String {
+        switch type {
+        case .info: "info.circle.fill"
+        case .success: "checkmark.circle.fill"
+        case .error: "xmark.octagon.fill"
+        case .warning: "exclamationmark.triangle.fill"
+        }
+    }
+
+    // MARK: - Log Export
+
+    private var logTimestamp: String {
+        let df = DateFormatter()
+        df.dateFormat = "yyyyMMdd-HHmmss"
+        return df.string(from: Date())
+    }
+
+    private func exportLogs() async {
+        exportingLogs = true
+        defer { exportingLogs = false }
+        let text = await Task.detached { MvpLogExporter.collectCombinedLogs() }.value
+        logExportDocument = MvpLogExportDocument(text: text)
+        showingLogExporter = true
+    }
+}
