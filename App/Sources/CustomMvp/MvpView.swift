@@ -33,19 +33,16 @@ struct MvpHeaderBar: View {
                     onExportLogs()
                 }, label: {
                     ZStack {
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(MvpTheme.borderColor.opacity(0.6))
-                            .frame(width: 32, height: 32)
-
                         if exportingLogs {
                             ProgressView()
-                                .scaleEffect(0.7)
+                                .scaleEffect(0.8)
                         } else {
                             Image(systemName: "doc.plaintext")
-                                .font(.system(size: 15))
+                                .font(.system(size: 18, weight: .semibold))
                                 .foregroundColor(MvpTheme.textPrimary)
                         }
                     }
+                    .frame(width: 32, height: 32)
                 })
                 .disabled(exportingLogs)
             }
@@ -252,6 +249,7 @@ struct MvpProfileCard: View {
     let mvpManager: MvpManager
 
     @State private var urlInput: String = ""
+    @FocusState private var isInputFocused: Bool
 
     private var hasProfile: Bool {
         activeProfile != nil && !mvpManager.showInputArea
@@ -312,7 +310,7 @@ struct MvpProfileCard: View {
                         .transition(.opacity)
                 }
             }
-            .frame(height: 108) // Match fixed height from HTML preview
+            .padding(.vertical, 4)
         }
         .padding(16)
         .background(MvpTheme.cardBg)
@@ -321,10 +319,12 @@ struct MvpProfileCard: View {
             RoundedRectangle(cornerRadius: 16)
                 .stroke(MvpTheme.borderColor, lineWidth: 1)
         )
+        .padding(.bottom, isInputFocused ? 80 : 0)
+        .animation(.easeOut(duration: 0.25), value: isInputFocused)
     }
 
     private func buildProfileHeader() -> some View {
-        HStack {
+        HStack(alignment: .center) {
             HStack(spacing: 8) {
                 Image(systemName: "slider.horizontal.3")
                     .font(.system(size: 15, weight: .semibold))
@@ -350,8 +350,8 @@ struct MvpProfileCard: View {
                             .font(.system(size: 13, weight: .semibold))
                     }
                     .foregroundColor(MvpTheme.dangerColor)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
                     .background(MvpTheme.dangerColor.opacity(0.08))
                     .cornerRadius(8)
                 })
@@ -363,25 +363,25 @@ struct MvpProfileCard: View {
                 }, label: {
                     HStack(spacing: 4) {
                         Image(systemName: "chevron.up")
-                            .font(.system(size: 12, weight: .bold))
+                            .font(.system(size: 11, weight: .bold))
                         Text("收起")
                             .font(.system(size: 13, weight: .semibold))
                     }
                     .foregroundColor(MvpTheme.textSecondary)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
                     .background(MvpTheme.borderColor.opacity(0.6))
                     .cornerRadius(8)
                 })
             }
         }
-        .frame(height: 28)
     }
 
     private func buildImportState() -> some View {
         VStack(spacing: 12) {
             ZStack(alignment: .trailing) {
                 TextField("粘贴或输入配置文件链接", text: $urlInput)
+                    .focused($isInputFocused)
                     .font(.system(size: 13))
                     .padding(.leading, 14)
                     .padding(.trailing, 40)
@@ -437,17 +437,17 @@ struct MvpProfileCard: View {
 
     private func buildLoadedState() -> some View {
         HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 10) {
                 Text(activeProfileTitle)
-                    .font(.system(size: 15, weight: .bold))
+                    .font(.system(size: 16, weight: .bold))
                     .foregroundColor(MvpTheme.textPrimary)
                     .lineLimit(1)
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 6) {
                     Text("更新于：\(updateDateStr)")
                     Text("规则：\(ruleCountStr)")
                 }
-                .font(.system(size: 12, weight: .medium))
+                .font(.system(size: 13, weight: .medium))
                 .foregroundColor(MvpTheme.textSecondary)
             }
 
@@ -512,19 +512,19 @@ struct MvpView: View {
                             onExportLogs: { Task { await exportLogs() } },
                             exportingLogs: exportingLogs
                         )
-                        .padding(.top, 24)
+                        .padding(.top, 12)
 
-                        Spacer(minLength: 32)
+                        Spacer(minLength: 20)
 
                         MvpShieldHero(appModel: appModel, activeProfile: actualProfile, mvpManager: mvpManager)
 
-                        Spacer(minLength: 32)
+                        Spacer(minLength: 24)
 
                         VStack(spacing: 16) {
                             MvpQuickInfoCards(appModel: appModel)
                             MvpProfileCard(appModel: appModel, activeProfile: actualProfile, mvpManager: mvpManager)
                         }
-                        .padding(.bottom, 24)
+                        .padding(.bottom, 16)
                     }
                     .padding(.horizontal, 20)
                     .frame(minHeight: geometry.size.height)
