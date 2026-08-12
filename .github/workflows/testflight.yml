@@ -20,6 +20,11 @@ jobs:
           
           echo "Replacing Bundle IDs and App Groups..."
           LC_ALL=C find . -type f -not -path "*/\.git/*" -not -path "*/\.github/*" -exec sed -i '' 's/com.tangzixiang.meow/com.david.fkad/g' {} +
+          
+          echo "Replacing App Name and VPN Display Name..."
+          # project.yml 中 会改 meow 与 meow Tunnel
+          sed -i '' 's/CFBundleDisplayName: meow/CFBundleDisplayName: FkAd/g' project.yml
+          sed -i '' 's/mgr.localizedDescription = "meow"/mgr.localizedDescription = "FkAd"/g' App/Sources/Services/VpnManager.swift
 
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
