@@ -183,7 +183,7 @@ struct MvpQuickInfoCards: View {
     }
 
     private func buildInfoItem(iconName: String, title: String, value: String, isActive: Bool) -> some View {
-        let bgFill = isActive ? MvpTheme.activeColor.opacity(0.12) : Color(hex: "#E5E7EB").opacity(0.6)
+        let bgFill = isActive ? MvpTheme.activeColor.opacity(0.12) : Color(red: 229 / 255.0, green: 231 / 255.0, blue: 235 / 255.0).opacity(0.6)
         let iconColor = isActive ? MvpTheme.activeColor : MvpTheme.textSecondary
         
         return HStack(spacing: 10) {
@@ -234,14 +234,15 @@ struct MvpProfileCard: View {
 
     private var activeProfileTitle: String {
         guard let profile = activeProfile else { return "Block Ad" }
-        if let name = profile.name, !name.isEmpty {
+        let name = profile.name
+        if !name.isEmpty {
             return name
         }
         return "Block Ad"
     }
     
     private var updateDateStr: String {
-        if let date = activeProfile?.updatedAt {
+        if let date = activeProfile?.lastUpdated {
             let df = DateFormatter()
             if Calendar.current.isDateInToday(date) {
                 df.dateFormat = "'今天' HH:mm"
@@ -256,7 +257,7 @@ struct MvpProfileCard: View {
     }
     
     private var ruleCountStr: String {
-        return "\(activeProfile?.selectedFileIds.count ?? 0) 条"
+        return activeProfile != nil ? "已加载" : "0 条"
     }
 
     var body: some View {
