@@ -4,7 +4,7 @@
 
 ## 1. 代码库修改记录
 
-为了脱离原作者的开源环境并实现全自动化云端部署，我们对代码库进行了以下修改：
+为了脱离原作者的开源环境并实现全自动化云端部署，对代码库进行了以下修改：
 
 ### 1.1 专属包名 (Bundle ID) 替换
 将项目中所有的默认包名 `com.tangzixiang.meow` 以及默认应用组 `group.com.tangzixiang.meow` 全局替换为了您的专属标识符。
@@ -41,7 +41,7 @@ VPN 扩展和主程序需要通过 App Group 路径传递代理规则和流量�
 
 ### 1.3 环境冲突与配置修正
 **【原项目对比】**：原版项目对 Xcode 和 Swift 版本的激进要求，与常规 CI 环境存在冲突。
-1. **降级 Swift 编译兼容性（🔴 必改项）**：将 `MeowShared/Package.swift` 中的 `swift-tools-version` 从超前的 `6.2` 降级为 `6.0`，以适配当前云端 macOS 虚拟机的 Xcode 16.x / 26.x 环境。
+1. **降级 Swift 编译兼容性（🔴 必改项）**：将 `MeowShared/Package.swift` 中的 `swift-tools-version` 从超前的 `6.2` 降级为 `6.0`，以适配当前云端 macOS 虚拟机的 Xcode 26.x 环境。
 2. **修复命令行签名团队丢失（🔴 必改项）**：在 `.github/workflows/testflight.yml` 的 `xcodebuild` 归档参数和自动生成的 `ExportOptions.plist` 中，动态注入了 `DEVELOPMENT_TEAM=$TEAM_ID`。因为纯命令行打包时 Xcode 无法像图形界面那样自动推断团队。
 
 ---
