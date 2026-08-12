@@ -35,15 +35,14 @@ VPN 扩展和主程序需要通过 App Group 路径传递代理规则和流量�
 - `fastlane/Appfile`, `fastlane/Fastfile`: 老式的自动化打包工具配置（我们已弃用，改用 GitHub Actions）。
 - `scripts/`: 原作者遗留的本地 shell 打包脚本。
 - `MeowTests/`: 单元测试代码，虽然不影响用户使用，但不改可能导致本地跑单元测试时读取不到配置。
-### 1.2 云端打包工作流 (`.github/workflows/testflight.yml`)
-由于本地手动签名 VPN 扩展极易遇到“描述文件不匹配”、“网络扩展权限不足”等沙盒报错，我们彻底废弃了本地编译脚本，引入了 **GitHub Actions**。
-- **构建环境**: 统一使用云端 macOS 虚拟机与最新版 Xcode。
-- **自动签名**: 使用 `xcodebuild -allowProvisioningUpdates`，借助 App Store Connect API 密钥，由云端服务器自动向苹果申请并下载最新的发布版（App Store）证书和描述文件，彻底解决了签名痛点。
+### 1.2 引入全新的云端打包工作流
+**【原项目对比】**：原版 `upstream/main` 中只有老旧的本地打包脚本 (`scripts/build-adhoc.sh` 等)，没有任何 CI/CD 配置。
+**【新增内容】**：我们从零创建了 `.github/workflows/testflight.yml` 文件。彻底废弃了本地编译脚本，引入了 GitHub Actions，实现了云端自动归档和上传，彻底解决了手动打包时恶心的证书管理痛点。
 
-### 1.3 解决的编译与环境冲突
-1. **清理本地废弃配置**：彻底删除了 `证书/` 目录下的所有本地 `.mobileprovision`、`.p12` 及临时 `profile.plist`，保持代码库纯净。
-2. **修正 Swift 版本兼容**：将 `MeowShared/Package.swift` 中的 `swift-tools-version` 从超前的 `6.2` 降级为 `6.0`，以适配当前的云端 Xcode 环境。
-3. **修复签名团队丢失**：在 `xcodebuild` 命令参数和自动生成的 `ExportOptions.plist` 中，动态注入了 `DEVELOPMENT_TEAM=$TEAM_ID`，解决了命令行归档时找不到开发者团队的报错。
+### 1.3 环境冲突与配置修正
+**【原项目对比】**：原版项目对 Xcode 和 Swift 版本的激进要求，与常规 CI 环境存在冲突。
+1. **降级 Swift 编译兼容性（🔴 必改项）**：将 `MeowShared/Package.swift` 中的 `swift-tools-version` 从超前的 `6.2` 降级为 `6.0`，以适配当前云端 macOS 虚拟机的 Xcode 16.x / 26.x 环境。
+2. **修复命令行签名团队丢失（🔴 必改项）**：在 `.github/workflows/testflight.yml` 的 `xcodebuild` 归档参数和自动生成的 `ExportOptions.plist` 中，动态注入了 `DEVELOPMENT_TEAM=$TEAM_ID`。因为纯命令行打包时 Xcode 无法像图形界面那样自动推断团队。
 
 ---
 
