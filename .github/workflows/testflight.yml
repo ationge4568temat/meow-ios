@@ -3,7 +3,7 @@ name: TestFlight Auto-Deploy
 on:
   push:
     branches:
-      - main # Or whatever branch you want to trigger releases from
+      - beta
   workflow_dispatch:
 
 jobs:
