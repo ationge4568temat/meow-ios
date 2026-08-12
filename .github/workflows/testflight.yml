@@ -25,6 +25,11 @@ jobs:
           # project.yml 中 会改 meow 与 meow Tunnel
           sed -i '' 's/CFBundleDisplayName: meow/CFBundleDisplayName: FkAd/g' project.yml
           sed -i '' 's/mgr.localizedDescription = "meow"/mgr.localizedDescription = "FkAd"/g' App/Sources/Services/VpnManager.swift
+          
+          echo "Replacing App Icon..."
+          cp .github/workflows/app_icon.png docs/appicon.png
+          pip3 install Pillow --break-system-packages || pip3 install Pillow
+          ./scripts/generate-app-icon.sh
 
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
