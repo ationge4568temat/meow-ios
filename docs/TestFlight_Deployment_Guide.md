@@ -7,11 +7,30 @@
 为了脱离原作者的开源环境并实现全自动化云端部署，我们对代码库进行了以下修改：
 
 ### 1.1 专属包名 (Bundle ID) 替换
-将项目中所有的默认包名 `com.tangzixiang.meow` 全局替换为了您的专属包名：
-- **主 App ID**: `com.david.fkad`
-- **VPN 扩展 ID**: `com.david.fkad.PacketTunnel`
-- **应用组 (App Group)**: `group.com.david.fkad`
+将项目中所有的默认包名 `com.tangzixiang.meow` 以及默认应用组 `group.com.tangzixiang.meow` 全局替换为了您的专属标识符。
+这不仅涉及工程配置，还深深绑定在底层代码中。以下是**必须修改的源码文件清单**：
 
+#### A. 核心配置文件
+- `project.yml`: XcodeGen 的工程构建脚本，必须修改其中的 `bundleIdPrefix` 字段。
+- `App/Info.plist`: 决定 App 显示信息的配置文件。
+
+#### B. 苹果权限声明文件 (Entitlements)
+- `App/App.entitlements`: 主程序的权限声明，必须将 `com.apple.security.application-groups` 的值改为您的 `group.com.david.fkad`。
+- `PacketTunnel/PacketTunnel.entitlements`: VPN 扩展的权限声明，做同样的 App Group 替换。
+
+#### C. 业务逻辑源码 (Swift & Objective-C)
+VPN 扩展和主程序需要通过 App Group 共享数据目录，因此在代码中写死了大量的 App Group 字符串，这些都已做替换：
+- **主程序模型层**: `App/Sources/AppModel.swift`, `MeowShared/Sources/MeowModels/AppGroup.swift`
+- **主程序服务层**: `App/Sources/Services/VpnManager.swift`, `App/Sources/Services/AppIPCBridge.swift`, `DailyTrafficAccumulator.swift`, `GeoAssetStager.swift`, `MeowAPI.swift`
+- **VPN 扩展层 (Objective-C)**: `PacketTunnel/Sources/MWAppGroup.m`, `MWTunnelEngine.m`, `PacketTunnelProvider.m`
+
+#### D. 底层核心层 (Rust)
+- `core/rust/meow-ios-ffi/src/logging.rs`: Rust 层的日志模块也硬编码了宿主 App Group 的目录路径以存放日志文件。
+
+#### E. 自动化脚本与其他
+- `fastlane/Appfile`, `fastlane/Fastfile`
+- `scripts/` 目录下的打包 shell 脚本。
+- `MeowTests/` 目录下的单元测试用例。
 ### 1.2 云端打包工作流 (`.github/workflows/testflight.yml`)
 由于本地手动签名 VPN 扩展极易遇到“描述文件不匹配”、“网络扩展权限不足”等沙盒报错，我们彻底废弃了本地编译脚本，引入了 **GitHub Actions**。
 - **构建环境**: 统一使用云端 macOS 虚拟机与最新版 Xcode。
