@@ -366,7 +366,7 @@ struct MvpProfileCard: View {
                     } else {
                         Image(systemName: "square.and.arrow.down.fill")
                             .font(.system(size: 14))
-                        Text("下载并导入配置")
+                        Text("下载并导入")
                             .font(.system(size: 14, weight: .bold))
                     }
                 }
