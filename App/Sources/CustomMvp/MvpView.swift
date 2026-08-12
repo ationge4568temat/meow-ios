@@ -250,6 +250,7 @@ struct MvpProfileCard: View {
 
     @State private var urlInput: String = ""
     @FocusState private var isInputFocused: Bool
+    @State private var ruleCountStr: String = "0 条"
 
     private var hasProfile: Bool {
         activeProfile != nil && !mvpManager.showInputArea
@@ -275,23 +276,25 @@ struct MvpProfileCard: View {
         return "未知"
     }
     
-    private var ruleCountStr: String {
-        guard let yaml = activeProfile?.yamlContent else { return "0 条" }
-        var count = 0
-        var inRules = false
-        yaml.enumerateLines { line, stop in
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            if trimmed.hasPrefix("rules:") {
-                inRules = true
-            } else if inRules {
-                if trimmed.hasPrefix("-") {
-                    count += 1
-                } else if !trimmed.isEmpty && !trimmed.hasPrefix("#") {
-                    stop = true
+    private func computeRuleCount(from yaml: String?) async -> String {
+        guard let yaml else { return "0 条" }
+        return await Task.detached {
+            var count = 0
+            var inRules = false
+            yaml.enumerateLines { line, stop in
+                let trimmed = line.trimmingCharacters(in: .whitespaces)
+                if trimmed.hasPrefix("rules:") {
+                    inRules = true
+                } else if inRules {
+                    if trimmed.hasPrefix("-") {
+                        count += 1
+                    } else if !trimmed.isEmpty && !trimmed.hasPrefix("#") {
+                        stop = true
+                    }
                 }
             }
-        }
-        return "\(count) 条"
+            return "\(count) 条"
+        }.value
     }
 
     var body: some View {
@@ -321,6 +324,9 @@ struct MvpProfileCard: View {
         )
         .padding(.bottom, isInputFocused ? 80 : 0)
         .animation(.easeOut(duration: 0.25), value: isInputFocused)
+        .task(id: activeProfile?.lastUpdated) {
+            ruleCountStr = await computeRuleCount(from: activeProfile?.yamlContent)
+        }
     }
 
     private func buildProfileHeader() -> some View {
