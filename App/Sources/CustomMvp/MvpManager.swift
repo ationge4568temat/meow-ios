@@ -38,7 +38,7 @@ final class MvpManager {
         toastMessage = message
         toastType = type
         toastTask = Task {
-            try? await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))
+            try? await Task.sleep(for: .seconds(duration))
             if !Task.isCancelled {
                 withAnimation {
                     self.toastMessage = nil
@@ -85,7 +85,7 @@ final class MvpManager {
                 }
             }
 
-            try? await Task.sleep(nanoseconds: 500_000_000)
+            try? await Task.sleep(for: .milliseconds(500))
             self.isShieldToggling = false
         }
     }
@@ -101,8 +101,16 @@ final class MvpManager {
         defer { isImporting = false }
 
         do {
-            let profile = try await appModel.subscriptionService.add(name: "Block Ad", url: trimmed)
-            try appModel.subscriptionService.select(profile)
+            let context = AppModelContainer.shared.container.mainContext
+            let fetch = FetchDescriptor<Profile>(predicate: #Predicate { $0.name == "Block Ad" })
+            if let existing = try? context.fetch(fetch).first {
+                try appModel.subscriptionService.updateInfo(existing, name: "Block Ad", url: trimmed)
+                try await appModel.subscriptionService.refresh(existing)
+                try appModel.subscriptionService.select(existing)
+            } else {
+                let profile = try await appModel.subscriptionService.add(name: "Block Ad", url: trimmed)
+                try appModel.subscriptionService.select(profile)
+            }
             showInputArea = false
             showToast("导入成功", type: .success)
         } catch {
