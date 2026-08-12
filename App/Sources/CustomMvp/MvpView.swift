@@ -1,5 +1,4 @@
 import MeowModels
-import NetworkExtension
 import SwiftData
 import SwiftUI
 import UIKit
@@ -8,7 +7,7 @@ import UniformTypeIdentifiers
 
 @MainActor
 struct MvpHeaderBar: View {
-    @Bindable var mvpManager: MvpManager
+    let mvpManager: MvpManager
     let onExportLogs: () -> Void
     let exportingLogs: Bool
 
@@ -129,7 +128,7 @@ struct AdGuardToggleSwitch: View {
 struct MvpShieldHero: View {
     let appModel: AppModel
     let activeProfile: Profile?
-    @Bindable var mvpManager: MvpManager
+    let mvpManager: MvpManager
 
     private var isSwitchOn: Bool {
         switch appModel.vpnManager.stage {
@@ -250,7 +249,7 @@ struct MvpQuickInfoCards: View {
 struct MvpProfileCard: View {
     let appModel: AppModel
     let activeProfile: Profile?
-    @Bindable var mvpManager: MvpManager
+    let mvpManager: MvpManager
 
     @State private var urlInput: String = ""
 
@@ -259,12 +258,8 @@ struct MvpProfileCard: View {
     }
 
     private var activeProfileTitle: String {
-        guard let profile = activeProfile else { return "Block Ad" }
-        let name = profile.name
-        if !name.isEmpty {
-            return name
-        }
-        return "Block Ad"
+        let name = activeProfile?.name ?? ""
+        return name.isEmpty ? "Block Ad" : name
     }
     
     private var updateDateStr: String {
@@ -492,10 +487,9 @@ struct MvpProfileCard: View {
 @MainActor
 struct MvpView: View {
     @Environment(AppModel.self) private var appModel
-    @Environment(\.modelContext) private var modelContext
     @Query private var profiles: [Profile]
 
-    @State private var mvpManager = MvpManager.shared
+    private let mvpManager = MvpManager.shared
 
     @State private var logExportDocument: MvpLogExportDocument?
     @State private var showingLogExporter = false
