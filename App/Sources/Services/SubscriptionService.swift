@@ -242,11 +242,13 @@ final class SubscriptionService {
         // hit identical UA gates. Bumped together with the meow-rs tag
         // in `core/rust/meow-ios-ffi/Cargo.toml`.
         request.setValue("clash.meta/0.7.4", forHTTPHeaderField: "User-Agent")
+        request.setValue(MvpDevice.hwid, forHTTPHeaderField: "X-HWID") // 注入 MVP HWID
         let (data, response) = try await session.data(for: request)
         if let http = response as? HTTPURLResponse, !(200 ..< 300).contains(http.statusCode) {
             throw SubscriptionError.http(status: http.statusCode)
         }
-        return try await normalize(body: data)
+        let processedData = MvpCrypto.decryptIfNecessary(data) // MVP: 如果是加密数据，尝试解密
+        return try await normalize(body: processedData)
     }
 
     /// Internal-for-tests: runs the YAML sniff + optional conversion.
