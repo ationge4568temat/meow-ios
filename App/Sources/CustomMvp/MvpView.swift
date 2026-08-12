@@ -136,7 +136,7 @@ struct MvpShieldHero: View {
                 mvpManager.toggleShield(appModel: appModel, activeProfile: activeProfile)
             }
 
-            Text(isStart ? "广告防护已开启" : "广告防护已暂停")
+            Text(isStart ? "防护已开启" : "防护已暂停")
                 .font(.system(size: 19, weight: .bold))
                 .foregroundColor(MvpTheme.textPrimary)
                 .animation(.easeInOut(duration: 0.2), value: isStart)
