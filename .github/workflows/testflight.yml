@@ -44,6 +44,8 @@ jobs:
               <string>upload</string>
               <key>manageAppVersionAndBuildNumber</key>
               <true/>
+              <key>teamID</key>
+              <string>\${{ secrets.TEAM_ID }}</string>
           </dict>
           </plist>
           EOF
@@ -60,6 +62,7 @@ jobs:
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          TEAM_ID: ${{ secrets.TEAM_ID }}
         run: |
           xcodebuild archive \
             -project meow-ios.xcodeproj \
@@ -69,7 +72,8 @@ jobs:
             -allowProvisioningUpdates \
             -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_${ASC_KEY_ID}.p8 \
             -authenticationKeyID $ASC_KEY_ID \
-            -authenticationKeyIssuerID $ASC_ISSUER_ID
+            -authenticationKeyIssuerID $ASC_ISSUER_ID \
+            DEVELOPMENT_TEAM=$TEAM_ID
 
       - name: Export and Upload to TestFlight
         env:
