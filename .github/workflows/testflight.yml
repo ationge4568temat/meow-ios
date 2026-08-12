@@ -27,6 +27,7 @@ jobs:
           ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          TEAM_ID: ${{ secrets.TEAM_ID }}
         run: |
           # Xcode looks for API keys in ~/.appstoreconnect/private_keys/
           mkdir -p ~/.appstoreconnect/private_keys/
@@ -39,13 +40,13 @@ jobs:
           <plist version="1.0">
           <dict>
               <key>method</key>
-              <string>app-store</string>
+              <string>app-store-connect</string>
               <key>destination</key>
               <string>upload</string>
               <key>manageAppVersionAndBuildNumber</key>
               <true/>
               <key>teamID</key>
-              <string>\${{ secrets.TEAM_ID }}</string>
+              <string>${TEAM_ID}</string>
           </dict>
           </plist>
           EOF
