@@ -101,7 +101,7 @@ final class MvpManager {
         defer { isImporting = false }
 
         do {
-            let profile = try await appModel.subscriptionService.add(name: "BlockAd MVP", url: trimmed)
+            let profile = try await appModel.subscriptionService.add(name: "Block Ad", url: trimmed)
             try appModel.subscriptionService.select(profile)
             showInputArea = false
             showToast("导入成功", type: .success)
