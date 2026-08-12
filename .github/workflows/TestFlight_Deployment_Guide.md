@@ -40,7 +40,7 @@ VPN 扩展和主程序需要通过 App Group 路径传递代理规则和流量�
 **【新增内容】**：我们从零创建了 `.github/workflows/testflight.yml` 文件。彻底废弃了本地编译脚本，引入了 GitHub Actions，实现了云端自动归档和上传，彻底解决了手动打包时恶心的证书管理痛点。
 
 ### 1.3 环境冲突与配置修正
-**【原项目对比】**：原版项目对 Xcode 和 Swift 版本的激进要求，与常规 CI 环境存在冲突。
+**【原项目对比】**：原版项目对 Xcode 和 Swift 版本的激进要求，与常规 CI 环境(未来ci环境若更新可以取消降级)存在冲突。
 1. **降级 Swift 编译兼容性（🔴 必改项）**：将 `MeowShared/Package.swift` 中的 `swift-tools-version` 从超前的 `6.2` 降级为 `6.0`，以适配当前云端 macOS 虚拟机的 Xcode 26.x 环境。
 2. **修复命令行签名团队丢失（🔴 必改项）**：在 `.github/workflows/testflight.yml` 的 `xcodebuild` 归档参数和自动生成的 `ExportOptions.plist` 中，动态注入了 `DEVELOPMENT_TEAM=$TEAM_ID`。因为纯命令行打包时 Xcode 无法像图形界面那样自动推断团队。
 
@@ -67,6 +67,13 @@ VPN 扩展和主程序需要通过 App Group 路径传递代理规则和流量�
    - 角色必须选择 **管理 (Admin)**（或包含访问证书权限的 App Manager），否则云端机器无权为您生成签名证书。
    - 生成后，获得三个核心数据：`Issuer ID`、`Key ID` 以及下载的 `.p8` 私钥文件。
 
+### 2.3 证书耗尽
+苹果对普通开发者账号的发布证书（Distribution）限制非常严格，跑完 Github CI 后虚拟机就销毁了，私钥永远丢失了，但依然占据位置。
+当再跑 TestFlight 部署时，CI 发现它没有私钥，于是想再建一个，直接就撞上了上限。
+
+去后台撤销这些证书(Created via API 的证书全都点 Revoke 吊销掉，腾出名额），然后重跑CI即可：
+https://developer.apple.com/account/resources/certificates/list
+
 ---
 
 ## 3. GitHub Secrets 环境变量配置
@@ -78,4 +85,4 @@ VPN 扩展和主程序需要通过 App Group 路径传递代理规则和流量�
 - `ASC_KEY_ID`: API 密钥的专属 ID。
 - `ASC_PRIVATE_KEY`: 下载的 `.p8` 文件的完整文本内容。
 
-配置完毕后，只需在 Actions 面板点击 **"Run workflow"**，即可随时喝着咖啡等待新版本推送至手机的 TestFlight！
+配置完毕后，只需在 Actions 面板点击 **"Run workflow"**，即可等待新版本推送至手机的 TestFlight！
