@@ -380,7 +380,7 @@ struct MvpProfileCard: View {
     private func buildImportState() -> some View {
         VStack(spacing: 12) {
             ZStack(alignment: .trailing) {
-                TextField("粘贴或输入配置文件链接", text: $urlInput)
+                TextField("粘贴配置文件链接", text: $urlInput)
                     .focused($isInputFocused)
                     .font(.system(size: 13))
                     .padding(.leading, 14)
