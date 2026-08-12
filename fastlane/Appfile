@@ -1,5 +1,5 @@
 app_identifier("com.david.fkad")
-apple_id("max.c.lv@gmail.com")
+apple_id("your.email@example.com")
 # Production team id is not committed — it comes from prod.env (gitignored).
 # Run `source prod.env` (or `set -a; . prod.env; set +a`) before invoking
 # fastlane so DEVELOPMENT_TEAM is set.
