@@ -39,21 +39,31 @@ enum MvpLogExporter {
     private static func collectTunnelFileLog() -> String {
         let maxBytes = 512 * 1024
         var data = Data()
-        if let rotated = try? Data(contentsOf: AppGroup.tunnelLogURL.appendingPathExtension("1")) {
-            data.append(rotated)
+        
+        func readLastBytes(from url: URL, max: Int) -> Data {
+            guard let handle = try? FileHandle(forReadingFrom: url) else { return Data() }
+            defer { try? handle.close() }
+            guard let size = try? handle.seekToEnd() else { return Data() }
+            let readSize = min(size, UInt64(max))
+            try? handle.seek(toOffset: size - readSize)
+            return (try? handle.readToEnd()) ?? Data()
         }
-        if let active = try? Data(contentsOf: AppGroup.tunnelLogURL) {
-            data.append(active)
+        
+        let activeData = readLastBytes(from: AppGroup.tunnelLogURL, max: maxBytes)
+        if activeData.count < maxBytes {
+            let remaining = maxBytes - activeData.count
+            let rotatedData = readLastBytes(from: AppGroup.tunnelLogURL.appendingPathExtension("1"), max: remaining)
+            data.append(rotatedData)
         }
+        data.append(activeData)
+
         if data.isEmpty {
             return """
             No packet-tunnel log file at \(AppGroup.tunnelLogURL.path).
             Connect the tunnel at least once — the engine writes this file while running.
             """
         }
-        if data.count > maxBytes {
-            data = data.suffix(maxBytes)
-        }
+
         // swiftlint:disable:next optional_data_string_conversion
         return String(decoding: data, as: UTF8.self)
     }
