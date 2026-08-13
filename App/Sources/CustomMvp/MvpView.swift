@@ -19,7 +19,7 @@ struct MvpHeaderBar: View {
         ZStack(alignment: .center) {
             // Centered Title with tap gesture
             Text("Block Ad")
-                .font(.system(size: 16, weight: .semibold))
+                .font(.system(size: 17, weight: .bold))
                 .foregroundColor(MvpTheme.textPrimary)
                 .contentShape(Rectangle())
                 .onTapGesture {
@@ -152,18 +152,18 @@ struct MvpStatusHero: View {
     }
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 16) {
             MvpToggleSwitch(isOn: isSwitchOn) {
                 mvpManager.toggleConnection(appModel: appModel, activeProfile: activeProfile)
             }
 
             Text(statusTitle)
-                .font(.system(size: 19, weight: .bold))
+                .font(.system(size: 24, weight: .bold))
                 .foregroundColor(MvpTheme.textPrimary)
                 .animation(.easeInOut(duration: 0.2), value: appModel.vpnManager.stage)
 
             Text(statusSubtitle)
-                .font(.system(size: 12, weight: .medium))
+                .font(.system(size: 14, weight: .medium))
                 .foregroundColor(MvpTheme.textSecondary)
                 .animation(.easeInOut(duration: 0.2), value: appModel.vpnManager.stage)
         }
@@ -187,7 +187,7 @@ struct MvpQuickInfoCards: View {
     }
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 16) {
             buildInfoItem(
                 iconName: "shield.fill",
                 title: "防护状态",
@@ -208,24 +208,24 @@ struct MvpQuickInfoCards: View {
         let bgFill = isActive ? MvpTheme.activeColor.opacity(0.12) : Color(red: 229 / 255.0, green: 231 / 255.0, blue: 235 / 255.0).opacity(0.6)
         let iconColor = isActive ? MvpTheme.activeColor : MvpTheme.textSecondary
         
-        return HStack(spacing: 10) {
+        return HStack(alignment: .center, spacing: 12) {
             ZStack {
                 RoundedRectangle(cornerRadius: 10)
                     .fill(bgFill)
                     .frame(width: 32, height: 32)
 
                 Image(systemName: iconName)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(iconColor)
             }
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(.system(size: 12, weight: .medium))
                     .foregroundColor(MvpTheme.textSecondary)
 
                 Text(value)
-                    .font(.system(size: 13, weight: .bold))
+                    .font(.system(size: 15, weight: .bold))
                     .foregroundColor(MvpTheme.textPrimary)
                     .lineLimit(1)
             }
@@ -332,13 +332,13 @@ struct MvpProfileCard: View {
 
     private func buildProfileHeader() -> some View {
         HStack(alignment: .center) {
-            HStack(spacing: 8) {
+            HStack(alignment: .center, spacing: 8) {
                 Image(systemName: "slider.horizontal.3")
-                    .font(.system(size: 14))
+                    .font(.system(size: 16))
                     .foregroundColor(MvpTheme.textPrimary)
 
                 Text("配置文件")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 16, weight: .bold))
                     .foregroundColor(MvpTheme.textPrimary)
             }
 
@@ -388,7 +388,7 @@ struct MvpProfileCard: View {
         VStack(spacing: 12) {
             ZStack(alignment: .trailing) {
                 TextField("粘贴配置文件链接", text: $urlInput)
-                    .font(.system(size: 13))
+                    .font(.system(size: 14))
                     .padding(.leading, 14)
                     .padding(.trailing, 40)
                     .padding(.vertical, 12)
@@ -419,16 +419,16 @@ struct MvpProfileCard: View {
                     await mvpManager.importConfig(url: urlInput, appModel: appModel)
                 }
             }, label: {
-                HStack(spacing: 8) {
+                HStack(alignment: .center, spacing: 8) {
                     if mvpManager.isImporting {
                         ProgressView()
                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             .scaleEffect(0.8)
                     } else {
                         Image(systemName: "square.and.arrow.down.fill")
-                            .font(.system(size: 14))
+                            .font(.system(size: 15))
                         Text("下载并导入")
-                            .font(.system(size: 14, weight: .bold))
+                            .font(.system(size: 15, weight: .bold))
                     }
                 }
                 .foregroundColor(.white)
@@ -444,9 +444,9 @@ struct MvpProfileCard: View {
 
     private func buildLoadedState() -> some View {
         HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 12) {
                 Text(activeProfileTitle)
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.system(size: 17, weight: .bold))
                     .foregroundColor(MvpTheme.textPrimary)
                     .lineLimit(1)
 
@@ -454,7 +454,7 @@ struct MvpProfileCard: View {
                     Text("更新于：\(updateDateStr)")
                     Text("规则：\(ruleCountStr)")
                 }
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: 13, weight: .regular))
                 .foregroundColor(MvpTheme.textSecondary)
             }
 
@@ -467,7 +467,7 @@ struct MvpProfileCard: View {
                     }
                 }
             }, label: {
-                HStack(spacing: 6) {
+                HStack(alignment: .center, spacing: 6) {
                     if mvpManager.isUpdating {
                         ProgressView()
                             .scaleEffect(0.7)
@@ -476,7 +476,7 @@ struct MvpProfileCard: View {
                             .font(.system(size: 12, weight: .bold))
                     }
                     Text("更新")
-                        .font(.system(size: 13, weight: .bold))
+                        .font(.system(size: 14, weight: .bold))
                 }
                 .foregroundColor(.white)
                 .padding(.horizontal, 16)
