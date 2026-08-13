@@ -514,42 +514,39 @@ struct MvpView: View {
                 ScrollView(.vertical, showsIndicators: false) {
                     ScrollViewReader { scrollProxy in
                         VStack(spacing: 0) {
-                            MvpHeaderBar(
-                                mvpManager: mvpManager,
-                                onExportLogs: { Task { await exportLogs() } },
-                                exportingLogs: exportingLogs
-                            )
-                            .padding(.top, 12)
-
-                            Spacer(minLength: 20)
-
-                            MvpStatusHero(appModel: appModel, activeProfile: actualProfile, mvpManager: mvpManager)
-
-                            Spacer(minLength: 24)
-
-                            VStack(spacing: 16) {
-                                MvpQuickInfoCards(appModel: appModel)
-                                MvpProfileCard(
-                                    appModel: appModel,
-                                    activeProfile: actualProfile,
+                            VStack(spacing: 0) {
+                                MvpHeaderBar(
                                     mvpManager: mvpManager,
-                                    isInputFocused: $isInputFocused
+                                    onExportLogs: { Task { await exportLogs() } },
+                                    exportingLogs: exportingLogs
                                 )
-                                    .id("ProfileCard")
-                                
-                                // Compensation distance for keyboard
-                                Color.clear
-                                    .frame(height: 26)
-                                    .id("FocusTarget")
+                                .padding(.top, 12)
+
+                                Spacer(minLength: 20)
+
+                                MvpStatusHero(appModel: appModel, activeProfile: actualProfile, mvpManager: mvpManager)
+
+                                Spacer(minLength: 24)
+
+                                VStack(spacing: 16) {
+                                    MvpQuickInfoCards(appModel: appModel)
+                                    MvpProfileCard(
+                                        appModel: appModel,
+                                        activeProfile: actualProfile,
+                                        mvpManager: mvpManager,
+                                        isInputFocused: $isInputFocused
+                                    )
+                                        .id("ProfileCard")
+                                }
+                                .padding(.bottom, 16)
                             }
-                            .padding(.bottom, 16)
+                            .frame(minHeight: geometry.size.height)
 
                             Color.clear
-                                .frame(height: 120) // Provide permanent scrolling buffer
+                                .frame(height: 40) // Provide a small permanent scrolling buffer
                                 .id("BottomPadding")
                         }
                         .padding(.horizontal, 20)
-                        .frame(minHeight: geometry.size.height)
                         .frame(maxWidth: 600)
                         .frame(maxWidth: .infinity, alignment: .center)
                         .onChange(of: isInputFocused) { _, isFocused in
@@ -557,7 +554,7 @@ struct MvpView: View {
                                 // Delay slightly to let the keyboard safe area update
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                                     withAnimation(.easeOut(duration: 0.3)) {
-                                        scrollProxy.scrollTo("FocusTarget", anchor: .bottom)
+                                        scrollProxy.scrollTo("ProfileCard", anchor: .bottom)
                                     }
                                 }
                             }
