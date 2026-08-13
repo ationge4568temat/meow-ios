@@ -20,10 +20,6 @@ Key Features:
 
 
 
-
-
-
-
 本应用不涉及用户注册或登录，所有功能开箱即用。为便于您验证核心的本地网络过滤与隐私防护功能，请按以下步骤测试：
 
 【测试步骤】
@@ -58,9 +54,6 @@ This app requires no account registration or login. All features are fully avail
 
 【Technical Details】
 Powered by the official iOS Network Extension framework (NEPacketTunnelProvider), all filtering logic runs strictly on the local device. It operates without external remote servers and collects no user data.
-
-
-
 
 
 
