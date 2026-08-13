@@ -138,7 +138,7 @@ struct MvpStatusHero: View {
     private var statusTitle: String {
         switch appModel.vpnManager.stage {
         case .connected: return "防护已开启"
-        case .connecting, .preparing: return "防护启动中..."
+        case .connecting, .preparing: return "防护启动中"
         default: return "防护已暂停"
         }
     }
