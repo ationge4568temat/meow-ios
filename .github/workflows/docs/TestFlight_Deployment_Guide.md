@@ -40,7 +40,7 @@ VPN 扩展和主程序需要通过 App Group 路径传递代理规则和流量�
 **【新增内容】**：我们从零创建了 `.github/workflows/testflight.yml` 文件。彻底废弃了本地编译脚本，引入了 GitHub Actions，实现了云端自动归档和上传，彻底解决了手动打包时恶心的证书管理痛点。
 
 ### 1.3 环境冲突与配置修正
-1. **修复命令行签名团队丢失（🔴 必改项）**：在 `.github/workflows/testflight.yml` 的 `xcodebuild` 归档参数和自动生成的 `ExportOptions.plist` 中，动态注入了 `DEVELOPMENT_TEAM=$TEAM_ID`。因为纯命令行打包时 Xcode 无法像图形界面那样自动推断团队。
+**修复命令行签名团队丢失（🔴 必改项）**：在 `.github/workflows/testflight.yml` 的 `xcodebuild` 归档参数和自动生成的 `ExportOptions.plist` 中，动态注入了 `DEVELOPMENT_TEAM=$TEAM_ID`。因为纯命令行打包时 Xcode 无法像图形界面那样自动推断团队。
 
 ---
 
