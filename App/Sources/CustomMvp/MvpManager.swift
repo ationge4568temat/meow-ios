@@ -24,7 +24,7 @@ final class MvpManager {
     var showInputArea: Bool = false
     var isImporting: Bool = false
     var isUpdating: Bool = false
-    var isShieldToggling: Bool = false
+    var isConnectionToggling: Bool = false
 
     var toastMessage: String?
     var toastType: MvpToastType = .info
@@ -47,8 +47,8 @@ final class MvpManager {
         }
     }
 
-    func toggleShield(appModel: AppModel, activeProfile: Profile?) {
-        guard !isShieldToggling, !isUpdating, !isImporting else {
+    func toggleConnection(appModel: AppModel, activeProfile: Profile?) {
+        guard !isConnectionToggling, !isUpdating, !isImporting else {
             if isUpdating || isImporting {
                 showToast("操作处理中，请稍候...", type: .warning, duration: 1.5)
             }
@@ -61,11 +61,18 @@ final class MvpManager {
             return
         }
 
-        isShieldToggling = true
-        let isConnected = appModel.vpnManager.stage == .connected
+        isConnectionToggling = true
+        
+        let isActiveState: Bool
+        switch appModel.vpnManager.stage {
+        case .connected, .connecting, .preparing:
+            isActiveState = true
+        default:
+            isActiveState = false
+        }
 
         Task {
-            if isConnected {
+            if isActiveState {
                 await appModel.vpnManager.disconnect()
             } else {
                 do {
@@ -86,7 +93,7 @@ final class MvpManager {
             }
 
             try? await Task.sleep(for: .milliseconds(500))
-            self.isShieldToggling = false
+            self.isConnectionToggling = false
         }
     }
 
