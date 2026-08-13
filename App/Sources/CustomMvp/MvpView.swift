@@ -338,7 +338,7 @@ struct MvpProfileCard: View {
                     .foregroundColor(MvpTheme.textPrimary)
 
                 Text("配置文件")
-                    .font(.system(size: 15, weight: .bold))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(MvpTheme.textPrimary)
             }
 
