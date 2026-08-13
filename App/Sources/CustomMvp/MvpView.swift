@@ -19,7 +19,7 @@ struct MvpHeaderBar: View {
         ZStack(alignment: .center) {
             // Centered Title with tap gesture
             Text("Block Ad")
-                .font(.system(size: 16))
+                .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(MvpTheme.textPrimary)
                 .contentShape(Rectangle())
                 .onTapGesture {
@@ -39,7 +39,7 @@ struct MvpHeaderBar: View {
                         } else {
                             Image(systemName: "doc.plaintext")
                                 .font(.system(size: 16))
-                                .foregroundColor(MvpTheme.textPrimary)
+                                .foregroundColor(MvpTheme.textSecondary)
                         }
                     }
                     .padding(.horizontal, 4)
