@@ -334,7 +334,7 @@ struct MvpProfileCard: View {
         HStack(alignment: .center) {
             HStack(spacing: 8) {
                 Image(systemName: "slider.horizontal.3")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 14))
                     .foregroundColor(MvpTheme.textPrimary)
 
                 Text("配置文件")
@@ -370,7 +370,7 @@ struct MvpProfileCard: View {
                 }, label: {
                     HStack(spacing: 4) {
                         Image(systemName: "chevron.up")
-                            .font(.system(size: 11, weight: .bold))
+                            .font(.system(size: 12))
                         Text("收起")
                             .font(.system(size: 13, weight: .semibold))
                     }
