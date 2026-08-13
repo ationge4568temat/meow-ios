@@ -19,7 +19,7 @@ struct MvpHeaderBar: View {
         ZStack(alignment: .center) {
             // Centered Title with tap gesture
             Text("Block Ad")
-                .font(.system(size: 18, weight: .bold))
+                .font(.system(size: 16))
                 .foregroundColor(MvpTheme.textPrimary)
                 .contentShape(Rectangle())
                 .onTapGesture {
@@ -38,11 +38,12 @@ struct MvpHeaderBar: View {
                                 .scaleEffect(0.8)
                         } else {
                             Image(systemName: "doc.plaintext")
-                                .font(.system(size: 18, weight: .semibold))
+                                .font(.system(size: 16))
                                 .foregroundColor(MvpTheme.textPrimary)
                         }
                     }
-                    .frame(width: 32, height: 32)
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 8)
                 })
                 .disabled(exportingLogs)
             }
@@ -304,14 +305,14 @@ struct MvpProfileCard: View {
             Divider()
                 .background(MvpTheme.borderColor)
 
-            VStack(spacing: 0) {
-                if hasProfile {
-                    buildLoadedState()
-                        .transition(.opacity)
-                } else {
-                    buildImportState()
-                        .transition(.opacity)
-                }
+            ZStack(alignment: .top) {
+                buildLoadedState()
+                    .opacity(hasProfile ? 1 : 0)
+                    .allowsHitTesting(hasProfile)
+                
+                buildImportState()
+                    .opacity(hasProfile ? 0 : 1)
+                    .allowsHitTesting(!hasProfile)
             }
             .padding(.vertical, 4)
         }
@@ -322,7 +323,7 @@ struct MvpProfileCard: View {
             RoundedRectangle(cornerRadius: 16)
                 .stroke(MvpTheme.borderColor, lineWidth: 1)
         )
-        .padding(.bottom, isInputFocused ? 80 : 0)
+        .padding(.bottom, isInputFocused ? 120 : 0)
         .animation(.easeOut(duration: 0.25), value: isInputFocused)
         .task(id: activeProfile?.lastUpdated) {
             ruleCountStr = await computeRuleCount(from: activeProfile?.yamlContent)
@@ -387,11 +388,11 @@ struct MvpProfileCard: View {
         VStack(spacing: 12) {
             ZStack(alignment: .trailing) {
                 TextField("粘贴配置文件链接", text: $urlInput)
-                    .focused($isInputFocused)
                     .font(.system(size: 13))
                     .padding(.leading, 14)
                     .padding(.trailing, 40)
                     .padding(.vertical, 12)
+                    .focused($isInputFocused)
                     .background(MvpTheme.inputBg)
                     .cornerRadius(12)
                     .overlay(
