@@ -70,7 +70,7 @@ struct MvpHeaderBar: View {
 }
 
 @MainActor
-struct AdGuardToggleSwitch: View {
+struct MvpToggleSwitch: View {
     let isOn: Bool
     let action: () -> Void
 
@@ -123,7 +123,7 @@ struct AdGuardToggleSwitch: View {
 }
 
 @MainActor
-struct MvpShieldHero: View {
+struct MvpStatusHero: View {
     let appModel: AppModel
     let activeProfile: Profile?
     let mvpManager: MvpManager
@@ -153,8 +153,8 @@ struct MvpShieldHero: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            AdGuardToggleSwitch(isOn: isSwitchOn) {
-                mvpManager.toggleShield(appModel: appModel, activeProfile: activeProfile)
+            MvpToggleSwitch(isOn: isSwitchOn) {
+                mvpManager.toggleConnection(appModel: appModel, activeProfile: activeProfile)
             }
 
             Text(statusTitle)
@@ -523,7 +523,7 @@ struct MvpView: View {
 
                         Spacer(minLength: 20)
 
-                        MvpShieldHero(appModel: appModel, activeProfile: actualProfile, mvpManager: mvpManager)
+                        MvpStatusHero(appModel: appModel, activeProfile: actualProfile, mvpManager: mvpManager)
 
                         Spacer(minLength: 24)
 
