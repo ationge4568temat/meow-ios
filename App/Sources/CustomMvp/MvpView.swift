@@ -305,7 +305,7 @@ struct MvpProfileCard: View {
             Divider()
                 .background(MvpTheme.borderColor)
 
-            ZStack(alignment: .top) {
+            ZStack(alignment: .center) {
                 buildLoadedState()
                     .opacity(hasProfile ? 1 : 0)
                     .allowsHitTesting(hasProfile)
