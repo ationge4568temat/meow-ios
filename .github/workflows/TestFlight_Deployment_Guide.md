@@ -40,8 +40,8 @@ VPN 扩展和主程序需要通过 App Group 路径传递代理规则和流量�
 **【新增内容】**：我们从零创建了 `.github/workflows/testflight.yml` 文件。彻底废弃了本地编译脚本，引入了 GitHub Actions，实现了云端自动归档和上传，彻底解决了手动打包时恶心的证书管理痛点。
 
 ### 1.3 环境冲突与配置修正
-**【原项目对比】**：原版项目对 Xcode 和 Swift 版本的激进要求，与常规 CI 环境(未来ci环境若更新可以取消降级)存在冲突。
-1. **降级 Swift 编译兼容性（🔴 必改项）**：将 `MeowShared/Package.swift` 中的 `swift-tools-version` 从超前的 `6.2` 降级为 `6.0`，以适配当前云端 macOS 虚拟机的 Xcode 26.x 环境。
+**【原项目对比】**：原版项目对 Xcode 和 Swift 版本的激进要求，与常规 CI 环境(未来ci环境若更新可以取消降级)可能存在冲突。
+1. **Swift 编译器版本兼容**：`macos-15` (Xcode 26) 已原生集成 Swift 6.2，直接支持 `MeowShared/Package.swift` 中的 `swift-tools-version: 6.2` 编译，无需降级。
 2. **修复命令行签名团队丢失（🔴 必改项）**：在 `.github/workflows/testflight.yml` 的 `xcodebuild` 归档参数和自动生成的 `ExportOptions.plist` 中，动态注入了 `DEVELOPMENT_TEAM=$TEAM_ID`。因为纯命令行打包时 Xcode 无法像图形界面那样自动推断团队。
 
 ---
