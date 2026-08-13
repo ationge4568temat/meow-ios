@@ -38,9 +38,9 @@ struct MvpHeaderBar: View {
                                 .scaleEffect(0.8)
                         } else {
                             Image(systemName: "doc.plaintext")
-                                .font(.system(size: 15))
+                                .font(.system(size: 14))
                                 .foregroundColor(MvpTheme.textSecondary)
-                                .opacity(0.8)
+                                .opacity(0.7)
                         }
                     }
                     .padding(.horizontal, 4)
