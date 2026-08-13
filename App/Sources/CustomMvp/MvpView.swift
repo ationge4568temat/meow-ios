@@ -374,7 +374,7 @@ struct MvpProfileCard: View {
                     }
                     .foregroundColor(MvpTheme.textSecondary)
                     .padding(8)
-                    .background(MvpTheme.borderColor.opacity(0.12))
+                    .background(MvpTheme.borderColor.opacity(0.5))
                     .cornerRadius(8)
                 })
             }
