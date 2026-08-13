@@ -499,8 +499,6 @@ struct MvpView: View {
     @State private var showingLogExporter = false
     @State private var exportingLogs = false
 
-    @State private var isKeyboardVisible = false
-
     private var actualProfile: Profile? {
         return profiles.first(where: \.isSelected) ?? profiles.first
     }
@@ -510,52 +508,31 @@ struct MvpView: View {
             MvpTheme.bgPrimary
                 .ignoresSafeArea()
 
-            GeometryReader { geometry in
-                ScrollView(.vertical, showsIndicators: false) {
-                    ScrollViewReader { scrollProxy in
-                        VStack(spacing: 0) {
-                            MvpHeaderBar(
-                                mvpManager: mvpManager,
-                                onExportLogs: { Task { await exportLogs() } },
-                                exportingLogs: exportingLogs
-                            )
-                            .padding(.top, 12)
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: 0) {
+                    MvpHeaderBar(
+                        mvpManager: mvpManager,
+                        onExportLogs: { Task { await exportLogs() } },
+                        exportingLogs: exportingLogs
+                    )
+                    .padding(.top, 12)
 
-                            Spacer(minLength: 20)
+                    Spacer(minLength: 20)
 
-                            MvpStatusHero(appModel: appModel, activeProfile: actualProfile, mvpManager: mvpManager)
+                    MvpStatusHero(appModel: appModel, activeProfile: actualProfile, mvpManager: mvpManager)
 
-                            Spacer(minLength: 24)
+                    Spacer(minLength: 24)
 
-                            VStack(spacing: 16) {
-                                MvpQuickInfoCards(appModel: appModel)
-                                MvpProfileCard(appModel: appModel, activeProfile: actualProfile, mvpManager: mvpManager)
-                                    .id("ProfileCard")
-                            }
-                            .padding(.bottom, 16)
-
-                            Color.clear
-                                .frame(height: isKeyboardVisible ? 120 : 0)
-                        }
-                        .padding(.horizontal, 20)
-                        .frame(minHeight: geometry.size.height)
-                        .frame(maxWidth: 600)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
-                            isKeyboardVisible = true
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                withAnimation(.easeOut(duration: 0.25)) {
-                                    scrollProxy.scrollTo("ProfileCard", anchor: .bottom)
-                                }
-                            }
-                        }
-                        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
-                            withAnimation(.easeOut(duration: 0.25)) {
-                                isKeyboardVisible = false
-                            }
-                        }
+                    VStack(spacing: 16) {
+                        MvpQuickInfoCards(appModel: appModel)
+                        MvpProfileCard(appModel: appModel, activeProfile: actualProfile, mvpManager: mvpManager)
                     }
+                    .padding(.bottom, 16)
                 }
+                .padding(.horizontal, 20)
+                .containerRelativeFrame(.vertical, alignment: .top)
+                .frame(maxWidth: 600)
+                .frame(maxWidth: .infinity, alignment: .center)
             }
 
             if let toastMsg = mvpManager.toastMessage {
