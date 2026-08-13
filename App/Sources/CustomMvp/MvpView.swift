@@ -38,9 +38,9 @@ struct MvpHeaderBar: View {
                                 .scaleEffect(0.8)
                         } else {
                             Image(systemName: "doc.plaintext")
-                                .font(.system(size: 15))
+                                .font(.system(size: 14))
                                 .foregroundColor(MvpTheme.textSecondary)
-                                .opacity(0.8)
+                                .opacity(0.85)
                         }
                     }
                     .padding(.horizontal, 4)
@@ -251,7 +251,7 @@ struct MvpProfileCard: View {
     let mvpManager: MvpManager
 
     @State private var urlInput: String = ""
-    @FocusState private var isInputFocused: Bool
+    var isInputFocused: FocusState<Bool>.Binding
     @State private var ruleCountStr: String = "0 条"
 
     private var hasProfile: Bool {
@@ -374,7 +374,7 @@ struct MvpProfileCard: View {
                     }
                     .foregroundColor(MvpTheme.textSecondary)
                     .padding(8)
-                    .background(MvpTheme.borderColor.opacity(0.5))
+                    .background(MvpTheme.borderColor.opacity(0.12))
                     .cornerRadius(8)
                 })
             }
@@ -389,7 +389,7 @@ struct MvpProfileCard: View {
                     .padding(.leading, 14)
                     .padding(.trailing, 40)
                     .padding(.vertical, 12)
-                    .focused($isInputFocused)
+                    .focused(isInputFocused)
                     .background(MvpTheme.inputBg)
                     .cornerRadius(12)
                     .overlay(
@@ -499,8 +499,7 @@ struct MvpView: View {
     @State private var showingLogExporter = false
     @State private var exportingLogs = false
 
-    @State private var isKeyboardVisible = false
-    @State private var baseHeight: CGFloat = 0
+    @FocusState private var isInputFocused: Bool
 
     private var actualProfile: Profile? {
         return profiles.first(where: \.isSelected) ?? profiles.first
@@ -511,66 +510,60 @@ struct MvpView: View {
             MvpTheme.bgPrimary
                 .ignoresSafeArea()
 
-            GeometryReader { geometry in
-                let currentHeight = geometry.size.height
+            ScrollView(.vertical, showsIndicators: false) {
+                ScrollViewReader { scrollProxy in
+                    VStack(spacing: 0) {
+                        MvpHeaderBar(
+                            mvpManager: mvpManager,
+                            onExportLogs: { Task { await exportLogs() } },
+                            exportingLogs: exportingLogs
+                        )
+                        .padding(.top, 12)
 
-                ScrollView(.vertical, showsIndicators: false) {
-                    ScrollViewReader { scrollProxy in
-                        VStack(spacing: 0) {
-                            MvpHeaderBar(
+                        Spacer(minLength: 20)
+
+                        MvpStatusHero(appModel: appModel, activeProfile: actualProfile, mvpManager: mvpManager)
+
+                        Spacer(minLength: 24)
+
+                        VStack(spacing: 16) {
+                            MvpQuickInfoCards(appModel: appModel)
+                            MvpProfileCard(
+                                appModel: appModel,
+                                activeProfile: actualProfile,
                                 mvpManager: mvpManager,
-                                onExportLogs: { Task { await exportLogs() } },
-                                exportingLogs: exportingLogs
+                                isInputFocused: $isInputFocused
                             )
-                            .padding(.top, 12)
-
-                            Spacer(minLength: 20)
-
-                            MvpStatusHero(appModel: appModel, activeProfile: actualProfile, mvpManager: mvpManager)
-
-                            Spacer(minLength: 24)
-
-                            VStack(spacing: 16) {
-                                MvpQuickInfoCards(appModel: appModel)
-                                MvpProfileCard(appModel: appModel, activeProfile: actualProfile, mvpManager: mvpManager)
-                                    .id("ProfileCard")
-                            }
-                            .padding(.bottom, 16)
-
+                                .id("ProfileCard")
+                            
+                            // Compensation distance for keyboard
                             Color.clear
-                                .frame(height: isKeyboardVisible ? 120 : 0)
-                                .id("BottomPadding")
+                                .frame(height: 26)
+                                .id("FocusTarget")
                         }
-                        .padding(.horizontal, 20)
-                        .frame(minHeight: isKeyboardVisible ? baseHeight : currentHeight)
-                        .frame(maxWidth: 600)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
-                            isKeyboardVisible = true
-                        }
-                        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardDidShowNotification)) { _ in
-                            withAnimation(.easeOut(duration: 0.25)) {
-                                scrollProxy.scrollTo("BottomPadding", anchor: .bottom)
+                        .padding(.bottom, 16)
+
+                        Color.clear
+                            .frame(height: 120) // Provide permanent scrolling buffer
+                            .id("BottomPadding")
+                    }
+                    .padding(.horizontal, 20)
+                    .frame(maxWidth: 600)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .onChange(of: isInputFocused) { _, isFocused in
+                        if isFocused {
+                            // Delay slightly to let the keyboard safe area update
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                                withAnimation(.easeOut(duration: 0.3)) {
+                                    scrollProxy.scrollTo("FocusTarget", anchor: .bottom)
+                                }
                             }
                         }
-                        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
-                            withAnimation(.easeOut(duration: 0.25)) {
-                                isKeyboardVisible = false
-                            }
-                        }
-                    }
-                }
-                .onAppear {
-                    if !isKeyboardVisible {
-                        baseHeight = currentHeight
-                    }
-                }
-                .onChange(of: currentHeight) { _, newHeight in
-                    if !isKeyboardVisible {
-                        baseHeight = newHeight
                     }
                 }
             }
+            .contentMargins(.bottom, 20, for: .scrollContent)
+            .scrollDismissesKeyboard(.interactively)
 
             if let toastMsg = mvpManager.toastMessage {
                 buildToastOverlay(msg: toastMsg)
