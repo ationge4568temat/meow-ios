@@ -514,40 +514,34 @@ struct MvpView: View {
                 ScrollView(.vertical, showsIndicators: false) {
                     ScrollViewReader { scrollProxy in
                         VStack(spacing: 0) {
-                            VStack(spacing: 0) {
-                                MvpHeaderBar(
+                            MvpHeaderBar(
+                                mvpManager: mvpManager,
+                                onExportLogs: { Task { await exportLogs() } },
+                                exportingLogs: exportingLogs
+                            )
+                            .padding(.top, 12)
+
+                            Spacer(minLength: 20)
+
+                            MvpStatusHero(appModel: appModel, activeProfile: actualProfile, mvpManager: mvpManager)
+
+                            Spacer(minLength: 24)
+
+                            VStack(spacing: 16) {
+                                MvpQuickInfoCards(appModel: appModel)
+                                MvpProfileCard(
+                                    appModel: appModel,
+                                    activeProfile: actualProfile,
                                     mvpManager: mvpManager,
-                                    onExportLogs: { Task { await exportLogs() } },
-                                    exportingLogs: exportingLogs
+                                    isInputFocused: $isInputFocused
                                 )
-                                .padding(.top, 12)
-
-                                Spacer(minLength: 20)
-
-                                MvpStatusHero(appModel: appModel, activeProfile: actualProfile, mvpManager: mvpManager)
-
-                                Spacer(minLength: 24)
-
-                                VStack(spacing: 16) {
-                                    MvpQuickInfoCards(appModel: appModel)
-                                    MvpProfileCard(
-                                        appModel: appModel,
-                                        activeProfile: actualProfile,
-                                        mvpManager: mvpManager,
-                                        isInputFocused: $isInputFocused
-                                    )
-                                        .id("ProfileCard")
-                                }
-                                .padding(.bottom, 16)
+                                .id("ProfileCard")
                             }
-                            .frame(minHeight: geometry.size.height)
-
-                            Color.clear
-                                .frame(height: 40) // Provide a small permanent scrolling buffer
-                                .id("BottomPadding")
+                            .padding(.bottom, 16)
                         }
                         .padding(.horizontal, 20)
                         .frame(maxWidth: 600)
+                        .frame(minHeight: geometry.size.height)
                         .frame(maxWidth: .infinity, alignment: .center)
                         .onChange(of: isInputFocused) { _, isFocused in
                             if isFocused {
@@ -561,7 +555,6 @@ struct MvpView: View {
                         }
                     }
                 }
-                .contentMargins(.bottom, 20, for: .scrollContent)
                 .scrollDismissesKeyboard(.interactively)
             }
 
