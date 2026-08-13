@@ -15,9 +15,6 @@ jobs:
 
       - name: Inject Private Config
         run: |
-          echo "Downgrading Swift version..."
-          sed -i '' 's/swift-tools-version: 6.2/swift-tools-version: 6.0/g' MeowShared/Package.swift
-          
           echo "Replacing Bundle IDs and App Groups..."
           LC_ALL=C find . -type f -not -path "*/\.git/*" -not -path "*/\.github/*" -exec sed -i '' 's/com.tangzixiang.meow/com.david.fkad/g' {} +
           
