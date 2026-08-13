@@ -19,7 +19,7 @@ struct MvpHeaderBar: View {
         ZStack(alignment: .center) {
             // Centered Title with tap gesture
             Text("Block Ad")
-                .font(.system(size: 17, weight: .bold))
+                .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(MvpTheme.textPrimary)
                 .contentShape(Rectangle())
                 .onTapGesture {
@@ -38,8 +38,9 @@ struct MvpHeaderBar: View {
                                 .scaleEffect(0.8)
                         } else {
                             Image(systemName: "doc.plaintext")
-                                .font(.system(size: 16))
+                                .font(.system(size: 15))
                                 .foregroundColor(MvpTheme.textSecondary)
+                                .opacity(0.8)
                         }
                     }
                     .padding(.horizontal, 4)
@@ -158,7 +159,7 @@ struct MvpStatusHero: View {
             }
 
             Text(statusTitle)
-                .font(.system(size: 24, weight: .bold))
+                .font(.system(size: 22, weight: .bold))
                 .foregroundColor(MvpTheme.textPrimary)
                 .animation(.easeInOut(duration: 0.2), value: appModel.vpnManager.stage)
 
@@ -225,7 +226,7 @@ struct MvpQuickInfoCards: View {
                     .foregroundColor(MvpTheme.textSecondary)
 
                 Text(value)
-                    .font(.system(size: 15, weight: .bold))
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(MvpTheme.textPrimary)
                     .lineLimit(1)
             }
@@ -355,9 +356,8 @@ struct MvpProfileCard: View {
                             .font(.system(size: 13, weight: .semibold))
                     }
                     .foregroundColor(MvpTheme.dangerColor)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(MvpTheme.dangerColor.opacity(0.08))
+                    .padding(8)
+                    .background(MvpTheme.dangerColor.opacity(0.06))
                     .cornerRadius(8)
                 })
             } else if activeProfile != nil {
@@ -373,9 +373,8 @@ struct MvpProfileCard: View {
                             .font(.system(size: 13, weight: .semibold))
                     }
                     .foregroundColor(MvpTheme.textSecondary)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(MvpTheme.borderColor.opacity(0.6))
+                    .padding(8)
+                    .background(MvpTheme.borderColor.opacity(0.5))
                     .cornerRadius(8)
                 })
             }
