@@ -25,7 +25,7 @@ jobs:
           
           echo "Replacing App Icon..."
           mv .github/workflows/app_flat.png docs/appicon.png
-          pip3 install Pillow --break-system-packages || pip3 install Pillow
+          pip3 install Pillow --break-system-packages
           ./scripts/generate-app-icon.sh
 
       - name: Setup Xcode
