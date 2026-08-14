@@ -355,9 +355,9 @@ struct MvpProfileCard: View {
                         Text("重置")
                             .font(.system(size: 13, weight: .semibold))
                     }
-                    .foregroundColor(MvpTheme.dangerColor)
+                    .foregroundColor(MvpTheme.dangerText)
                     .padding(8)
-                    .background(MvpTheme.dangerColor.opacity(0.06))
+                    .background(MvpTheme.dangerBadgeBg)
                     .cornerRadius(8)
                 })
             } else if activeProfile != nil {
