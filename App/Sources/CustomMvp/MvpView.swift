@@ -206,7 +206,7 @@ struct MvpQuickInfoCards: View {
     }
 
     private func buildInfoItem(iconName: String, title: String, value: String, isActive: Bool) -> some View {
-        let bgFill = isActive ? MvpTheme.activeColor.opacity(0.12) : Color(red: 229 / 255.0, green: 231 / 255.0, blue: 235 / 255.0).opacity(0.6)
+        let bgFill = isActive ? MvpTheme.activeColor.opacity(0.12) : MvpTheme.inactiveBadgeBg
         let iconColor = isActive ? MvpTheme.activeColor : MvpTheme.textSecondary
         
         return HStack(alignment: .center, spacing: 12) {
@@ -374,7 +374,7 @@ struct MvpProfileCard: View {
                     }
                     .foregroundColor(MvpTheme.textSecondary)
                     .padding(8)
-                    .background(MvpTheme.borderColor.opacity(0.5))
+                    .background(MvpTheme.inactiveBadgeBg)
                     .cornerRadius(8)
                 })
             }
