@@ -206,7 +206,7 @@ struct MvpQuickInfoCards: View {
     }
 
     private func buildInfoItem(iconName: String, title: String, value: String, isActive: Bool) -> some View {
-        let bgFill = isActive ? MvpTheme.activeColor.opacity(0.12) : MvpTheme.inactiveBadgeBg
+        let bgFill = isActive ? MvpTheme.activeColor.opacity(0.12) : MvpTheme.inactiveBadgeBg.opacity(0.6)
         let iconColor = isActive ? MvpTheme.activeColor : MvpTheme.textSecondary
         
         return HStack(alignment: .center, spacing: 12) {
@@ -357,7 +357,7 @@ struct MvpProfileCard: View {
                     }
                     .foregroundColor(MvpTheme.dangerText)
                     .padding(8)
-                    .background(MvpTheme.dangerBadgeBg)
+                    .background(MvpTheme.dangerColor.opacity(0.05))
                     .cornerRadius(8)
                 })
             } else if activeProfile != nil {
@@ -374,7 +374,7 @@ struct MvpProfileCard: View {
                     }
                     .foregroundColor(MvpTheme.textSecondary)
                     .padding(8)
-                    .background(MvpTheme.inactiveBadgeBg)
+                    .background(MvpTheme.inactiveBadgeBg.opacity(0.4))
                     .cornerRadius(8)
                 })
             }
