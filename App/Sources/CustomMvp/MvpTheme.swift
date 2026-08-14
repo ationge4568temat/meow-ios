@@ -13,6 +13,7 @@ enum MvpTheme {
 
     // Inactive & Disabled Colors
     static let inactiveGray = Color(red: 209 / 255.0, green: 213 / 255.0, blue: 219 / 255.0) // #D1D5DB
+    static let inactiveBadgeBg = Color(red: 229 / 255.0, green: 231 / 255.0, blue: 235 / 255.0).opacity(0.6) // #E5E7EB @ 60%
     
     // Additional UI Colors
     static let dangerColor = Color(red: 239 / 255.0, green: 68 / 255.0, blue: 68 / 255.0) // #EF4444
