@@ -18,7 +18,7 @@ enum MvpTheme {
     // Additional UI Colors
     static let dangerColor = Color(red: 239 / 255.0, green: 68 / 255.0, blue: 68 / 255.0) // #EF4444
     static let dangerText = Color(red: 248 / 255.0, green: 113 / 255.0, blue: 113 / 255.0) // #F87171 (soft red)
-    static let dangerBadgeBg = Color(red: 239 / 255.0, green: 68 / 255.0, blue: 68 / 255.0).opacity(0.04) // subtle light red tint
+    static let dangerBadgeBg = Color(red: 239 / 255.0, green: 68 / 255.0, blue: 68 / 255.0).opacity(0.05) // subtle light red tint
     static let inputBg = Color(red: 249 / 255.0, green: 250 / 255.0, blue: 251 / 255.0) // #F9FAFB
 
     // Typography Colors
