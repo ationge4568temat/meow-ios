@@ -6,6 +6,10 @@ on:
       - beta
   workflow_dispatch:
 
+concurrency:
+  group: testflight-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-deploy:
     runs-on: macos-15
@@ -25,7 +29,7 @@ jobs:
           
           echo "Replacing App Icon..."
           mv .github/workflows/app_flat.png docs/appicon.png
-          pip3 install Pillow --break-system-packages
+          pip3 install --quiet Pillow --break-system-packages
           ./scripts/generate-app-icon.sh
 
       - name: Setup Xcode
@@ -33,9 +37,36 @@ jobs:
         with:
           xcode-version: '^26.0'
 
+      - name: Set up Rust (stable + iOS target)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios
+
+      - name: Cache Cargo registry, git, and build target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            core/rust/meow-ios-ffi/target
+          key: cargo-testflight-${{ runner.os }}-${{ hashFiles('core/rust/meow-ios-ffi/Cargo.lock') }}
+          restore-keys: |
+            cargo-testflight-${{ runner.os }}-
+            cargo-${{ runner.os }}-
+
+      - name: Cache Swift Package Manager
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/org.swift.swiftpm
+          key: spm-${{ runner.os }}-${{ hashFiles('project.yml', 'MeowShared/Package.swift') }}
+          restore-keys: |
+            spm-${{ runner.os }}-
+
       - name: Install dependencies
         run: |
-          brew install xcodegen
+          if ! command -v xcodegen &> /dev/null; then
+            HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 brew install xcodegen
+          fi
 
       - name: Setup App Store Connect API Key
         env:
@@ -66,9 +97,9 @@ jobs:
           </plist>
           EOF
 
-      - name: Build Rust Core
+      - name: Build Rust Core (Device Only)
         run: |
-          ./scripts/build-rust.sh
+          .github/workflows/build-rust-device.sh
 
       - name: Generate Xcode Project
         run: |
