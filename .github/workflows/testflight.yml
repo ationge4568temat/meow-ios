@@ -28,7 +28,7 @@ jobs:
           sed -i '' 's/mgr.localizedDescription = "meow"/mgr.localizedDescription = "FkAd"/g' App/Sources/Services/VpnManager.swift
           
           echo "Replacing App Icon..."
-          mv .github/workflows/app_flat.png docs/appicon.png
+          mv .github/workflows/AppIcon_Flat.png docs/appicon.png
           pip3 install --quiet Pillow --break-system-packages
           ./scripts/generate-app-icon.sh
 
