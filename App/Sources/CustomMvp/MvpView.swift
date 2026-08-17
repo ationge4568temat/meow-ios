@@ -333,7 +333,7 @@ struct MvpProfileCard: View {
         HStack(alignment: .center) {
             HStack(alignment: .center, spacing: 8) {
                 Image(systemName: "slider.horizontal.3")
-                    .font(.system(size: 16))
+                    .font(.system(size: 15))
                     .foregroundColor(MvpTheme.textPrimary)
 
                 Text("配置文件")
