@@ -252,7 +252,7 @@ struct MvpProfileCard: View {
 
     @State private var urlInput: String = ""
     var isInputFocused: FocusState<Bool>.Binding
-    @State private var ruleCountStr: String = "0 条"
+    @State private var versionStr: String = "v0"
 
     private var hasProfile: Bool {
         activeProfile != nil && !mvpManager.showInputArea
@@ -278,8 +278,8 @@ struct MvpProfileCard: View {
         return "未知"
     }
     
-    private func computeRuleCount(from yaml: String?) async -> String {
-        guard let yaml else { return "0 条" }
+    private func computeVersion(from yaml: String?) async -> String {
+        guard let yaml else { return "v0" }
         return await Task.detached {
             var count = 0
             var inRules = false
@@ -295,7 +295,7 @@ struct MvpProfileCard: View {
                     }
                 }
             }
-            return "\(count) 条"
+            return "v\(count)"
         }.value
     }
 
@@ -325,7 +325,7 @@ struct MvpProfileCard: View {
                 .stroke(MvpTheme.borderColor, lineWidth: 1)
         )
         .task(id: activeProfile?.lastUpdated) {
-            ruleCountStr = await computeRuleCount(from: activeProfile?.yamlContent)
+            versionStr = await computeVersion(from: activeProfile?.yamlContent)
         }
     }
 
@@ -449,7 +449,7 @@ struct MvpProfileCard: View {
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text("更新于：\(updateDateStr)")
-                    Text("规则：\(ruleCountStr)")
+                    Text("版本：\(versionStr)")
                 }
                 .font(.system(size: 13, weight: .regular))
                 .foregroundColor(MvpTheme.textSecondary)
