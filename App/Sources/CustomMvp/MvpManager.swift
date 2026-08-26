@@ -166,7 +166,7 @@ final class MvpManager {
             return
         }
 
-        Self.log.info("Starting refreshRuleProviders via REST API on port \(creds.port)")
+        Self.log.info("Starting refreshRuleProviders via REST API on port \(creds.port, privacy: .public)")
 
         let session = URLSession.shared
         let baseURL = URL(string: "http://127.0.0.1:\(creds.port)")!
@@ -190,14 +190,14 @@ final class MvpManager {
            let providers = decoded.providers
         {
             providerNames = Array(providers.keys)
-            Self.log.info("Successfully fetched \(providerNames.count) rule providers from API.")
+            Self.log.info("Successfully fetched \(providerNames.count, privacy: .public) rule providers from API.")
         } else {
             Self.log.warning("Failed to fetch rule providers from API, falling back to YAML extraction.")
         }
 
         if providerNames.isEmpty, let yaml = activeProfile?.yamlContent {
             providerNames = extractRuleProviderNames(from: yaml)
-            Self.log.info("Extracted \(providerNames.count) rule providers from YAML: \(providerNames)")
+            Self.log.info("Extracted \(providerNames.count, privacy: .public) rule providers from YAML: \(providerNames, privacy: .public)")
         }
 
         for name in providerNames {
@@ -211,10 +211,10 @@ final class MvpManager {
             do {
                 let (_, putResp) = try await session.data(for: putReq)
                 if let httpResp = putResp as? HTTPURLResponse {
-                    Self.log.info("PUT \(name) responded with status \(httpResp.statusCode)")
+                    Self.log.info("PUT \(name, privacy: .public) responded with status \(httpResp.statusCode, privacy: .public)")
                 }
             } catch {
-                Self.log.error("PUT \(name) failed with error: \(error.localizedDescription)")
+                Self.log.error("PUT \(name, privacy: .public) failed with error: \(error.localizedDescription, privacy: .public)")
             }
         }
 
@@ -232,7 +232,7 @@ final class MvpManager {
         let container = AppGroup.containerURL
         let fileManager = FileManager.default
 
-        Self.log.info("Starting clearLocalRuleCache for providers: \(providerNames)")
+        Self.log.info("Starting clearLocalRuleCache for providers: \(providerNames, privacy: .public)")
 
         let extensions = [".mrs", ".yaml", ".yml"]
         let subdirectories = ["", "rule-providers", "rules", "ruleset"]
@@ -247,9 +247,9 @@ final class MvpManager {
                     if fileManager.fileExists(atPath: fileURL.path) {
                         do {
                             try fileManager.removeItem(at: fileURL)
-                            Self.log.info("Deleted cached rule file: \(fileURL.lastPathComponent)")
+                            Self.log.info("Deleted cached rule file: \(fileURL.lastPathComponent, privacy: .public)")
                         } catch {
-                            Self.log.error("Failed to delete cached rule file: \(fileURL.lastPathComponent), error: \(error.localizedDescription)")
+                            Self.log.error("Failed to delete cached rule file: \(fileURL.lastPathComponent, privacy: .public), error: \(error.localizedDescription, privacy: .public)")
                         }
                     }
                 }
