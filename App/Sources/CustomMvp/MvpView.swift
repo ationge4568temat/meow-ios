@@ -384,18 +384,27 @@ struct MvpProfileCard: View {
     private func buildImportState() -> some View {
         VStack(spacing: 12) {
             ZStack(alignment: .trailing) {
-                TextField("粘贴配置文件链接", text: $urlInput)
-                    .font(.system(size: 14))
-                    .padding(.leading, 14)
-                    .padding(.trailing, 40)
-                    .padding(.vertical, 12)
-                    .focused(isInputFocused)
-                    .background(MvpTheme.inputBg)
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(MvpTheme.borderColor, lineWidth: 1)
-                    )
+                TextField(
+                    "粘贴配置文件链接",
+                    text: $urlInput,
+                    prompt: Text("粘贴配置文件链接").foregroundColor(MvpTheme.textSecondary)
+                )
+                .font(.system(size: 14))
+                .foregroundColor(MvpTheme.textPrimary)
+                .tint(MvpTheme.activeColor)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .keyboardType(.URL)
+                .padding(.leading, 14)
+                .padding(.trailing, 40)
+                .padding(.vertical, 12)
+                .focused(isInputFocused)
+                .background(MvpTheme.inputBg)
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(MvpTheme.borderColor, lineWidth: 1)
+                )
 
                 Button(action: {
                     if let pasted = UIPasteboard.general.string {
@@ -467,6 +476,7 @@ struct MvpProfileCard: View {
                 HStack(alignment: .center, spacing: 6) {
                     if mvpManager.isUpdating {
                         ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             .scaleEffect(0.7)
                     } else {
                         Image(systemName: "arrow.triangle.2.circlepath")
@@ -562,6 +572,7 @@ struct MvpView: View {
                 buildToastOverlay(msg: toastMsg)
             }
         }
+        .preferredColorScheme(.light)
         .fileExporter(
             isPresented: $showingLogExporter,
             document: logExportDocument,
