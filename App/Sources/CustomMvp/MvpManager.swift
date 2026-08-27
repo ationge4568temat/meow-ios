@@ -201,6 +201,7 @@ final class MvpManager {
             Self.log.warning("Failed to fetch rule providers from API.")
         }
 
+        let logger = Self.log
         await withTaskGroup(of: Void.self) { group in
             for name in providerNames {
                 group.addTask {
@@ -214,10 +215,10 @@ final class MvpManager {
                     do {
                         let (_, putResp) = try await session.data(for: putReq)
                         if let httpResp = putResp as? HTTPURLResponse {
-                            Self.log.info("PUT \(name, privacy: .public) responded with status \(httpResp.statusCode, privacy: .public)")
+                            logger.info("PUT \(name, privacy: .public) responded with status \(httpResp.statusCode, privacy: .public)")
                         }
                     } catch {
-                        Self.log.error("PUT \(name, privacy: .public) failed with error: \(error.localizedDescription, privacy: .public)")
+                        logger.error("PUT \(name, privacy: .public) failed with error: \(error.localizedDescription, privacy: .public)")
                     }
                 }
             }
