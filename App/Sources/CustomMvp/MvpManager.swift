@@ -188,6 +188,7 @@ final class MvpManager {
         }
         struct ProviderStub: Decodable {
             let name: String?
+            let ruleCount: Int?
         }
 
         if let (data, resp) = try? await session.data(for: getReq),
@@ -196,7 +197,14 @@ final class MvpManager {
            let providers = decoded.providers
         {
             providerNames = Array(providers.keys)
-            Self.log.info("Successfully fetched \(providerNames.count, privacy: .public) rule providers from API.")
+            
+            let details = providers.values.compactMap { stub -> String? in
+                guard let name = stub.name else { return nil }
+                let countStr = stub.ruleCount.map { "\($0)" } ?? "?"
+                return "\(name)(\(countStr))"
+            }.joined(separator: ", ")
+            
+            Self.log.info("Successfully fetched \(providerNames.count, privacy: .public) rule providers from API: \(details, privacy: .public)")
         } else {
             Self.log.warning("Failed to fetch rule providers from API.")
         }
