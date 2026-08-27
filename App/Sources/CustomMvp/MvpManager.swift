@@ -104,7 +104,7 @@ final class MvpManager {
 
     func importConfig(url: String, appModel: AppModel) async {
         let trimmed = url.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, trimmed.hasPrefix("http://") || trimmed.hasPrefix("https://") else {
+        guard !trimmed.isEmpty, trimmed.hasPrefix("https://") else {
             showToast("请输入有效的配置文件链接", type: .info)
             return
         }
