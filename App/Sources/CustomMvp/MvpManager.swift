@@ -21,6 +21,7 @@ public enum MvpToastType {
 final class MvpManager {
     static let shared = MvpManager()
     private static let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "meow-ios", category: "mvp-manager")
+    private static let defaultProfileName = "Block Ad"
 
     var isMvpMode: Bool = !ProcessInfo.processInfo.arguments.contains("-UITests")
     var showInputArea: Bool = false
@@ -40,11 +41,13 @@ final class MvpManager {
         toastMessage = message
         toastType = type
         toastTask = Task {
-            try? await Task.sleep(for: .seconds(duration))
-            if !Task.isCancelled {
+            do {
+                try await Task.sleep(for: .seconds(duration))
                 withAnimation {
                     self.toastMessage = nil
                 }
+            } catch {
+                // Cancelled, do nothing
             }
         }
     }
@@ -90,7 +93,7 @@ final class MvpManager {
                         showToast("连接失败: \(err)", type: .error, duration: 4.0)
                     }
                 } catch {
-                    showToast("启动防追踪失败: \(error.localizedDescription)", type: .error)
+                    showToast("启动失败: \(error.localizedDescription)", type: .error)
                 }
             }
 
@@ -111,15 +114,16 @@ final class MvpManager {
 
         do {
             let context = AppModelContainer.shared.container.mainContext
-            let fetch = FetchDescriptor<Profile>(predicate: #Predicate { $0.name == "Block Ad" })
+            let profileName = Self.defaultProfileName
+            let fetch = FetchDescriptor<Profile>(predicate: #Predicate { $0.name == profileName })
             let profile: Profile
             if let existing = try? context.fetch(fetch).first {
-                try appModel.subscriptionService.updateInfo(existing, name: "Block Ad", url: trimmed)
+                try appModel.subscriptionService.updateInfo(existing, name: profileName, url: trimmed)
                 try await appModel.subscriptionService.refresh(existing)
                 try appModel.subscriptionService.select(existing)
                 profile = existing
             } else {
-                let created = try await appModel.subscriptionService.add(name: "Block Ad", url: trimmed)
+                let created = try await appModel.subscriptionService.add(name: profileName, url: trimmed)
                 try appModel.subscriptionService.select(created)
                 profile = created
             }
@@ -168,7 +172,9 @@ final class MvpManager {
 
         Self.log.info("Starting refreshRuleProviders via REST API on port \(creds.port, privacy: .public)")
 
-        let session = URLSession.shared
+        let config = URLSessionConfiguration.ephemeral
+        config.timeoutIntervalForRequest = 5.0
+        let session = URLSession(configuration: config)
         let baseURL = URL(string: "http://127.0.0.1:\(creds.port)")!
 
         var providerNames: [String] = []
@@ -192,29 +198,28 @@ final class MvpManager {
             providerNames = Array(providers.keys)
             Self.log.info("Successfully fetched \(providerNames.count, privacy: .public) rule providers from API.")
         } else {
-            Self.log.warning("Failed to fetch rule providers from API, falling back to YAML extraction.")
+            Self.log.warning("Failed to fetch rule providers from API.")
         }
 
-        if providerNames.isEmpty, let yaml = activeProfile?.yamlContent {
-            providerNames = extractRuleProviderNames(from: yaml)
-            Self.log.info("Extracted \(providerNames.count, privacy: .public) rule providers from YAML: \(providerNames, privacy: .public)")
-        }
-
-        for name in providerNames {
-            let escaped = name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? name
-            let putURL = baseURL.appending(path: "/providers/rules/\(escaped)")
-            var putReq = URLRequest(url: putURL)
-            putReq.httpMethod = "PUT"
-            if !creds.secret.isEmpty {
-                putReq.setValue("Bearer \(creds.secret)", forHTTPHeaderField: "Authorization")
-            }
-            do {
-                let (_, putResp) = try await session.data(for: putReq)
-                if let httpResp = putResp as? HTTPURLResponse {
-                    Self.log.info("PUT \(name, privacy: .public) responded with status \(httpResp.statusCode, privacy: .public)")
+        await withTaskGroup(of: Void.self) { group in
+            for name in providerNames {
+                group.addTask {
+                    let escaped = name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? name
+                    let putURL = baseURL.appending(path: "/providers/rules/\(escaped)")
+                    var putReq = URLRequest(url: putURL)
+                    putReq.httpMethod = "PUT"
+                    if !creds.secret.isEmpty {
+                        putReq.setValue("Bearer \(creds.secret)", forHTTPHeaderField: "Authorization")
+                    }
+                    do {
+                        let (_, putResp) = try await session.data(for: putReq)
+                        if let httpResp = putResp as? HTTPURLResponse {
+                            Self.log.info("PUT \(name, privacy: .public) responded with status \(httpResp.statusCode, privacy: .public)")
+                        }
+                    } catch {
+                        Self.log.error("PUT \(name, privacy: .public) failed with error: \(error.localizedDescription, privacy: .public)")
+                    }
                 }
-            } catch {
-                Self.log.error("PUT \(name, privacy: .public) failed with error: \(error.localizedDescription, privacy: .public)")
             }
         }
 
@@ -225,59 +230,33 @@ final class MvpManager {
     /// When VPN is not connected, remove cached rule provider files in AppGroup container
     /// so the engine is forced to pull fresh copies from remote on next start.
     func clearLocalRuleCache(activeProfile: Profile?) {
-        guard let yaml = activeProfile?.yamlContent else { return }
-        let providerNames = extractRuleProviderNames(from: yaml)
-        guard !providerNames.isEmpty else { return }
-        
         let container = AppGroup.containerURL
         let fileManager = FileManager.default
 
-        Self.log.info("Starting clearLocalRuleCache for providers: \(providerNames, privacy: .public)")
+        Self.log.info("Starting clearLocalRuleCache.")
 
-        let extensions = [".mrs", ".yaml", ".yml"]
-        let subdirectories = ["", "rule-providers", "rules", "ruleset"]
+        let subdirectories = ["rule-providers", "rules", "ruleset"]
+        let extensions = ["mrs", "yaml", "yml"]
+        var deletedProviders: [String] = []
 
-        for name in providerNames {
-            let escapedName = name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? name
+        for subdir in subdirectories {
+            let dirURL = container.appending(path: subdir)
+            guard let urls = try? fileManager.contentsOfDirectory(at: dirURL, includingPropertiesForKeys: nil) else { continue }
             
-            for subdir in subdirectories {
-                let dirURL = subdir.isEmpty ? container : container.appending(path: subdir)
-                for ext in extensions {
-                    let fileURL = dirURL.appending(path: escapedName + ext)
-                    if fileManager.fileExists(atPath: fileURL.path) {
-                        do {
-                            try fileManager.removeItem(at: fileURL)
-                            Self.log.info("Deleted cached rule file: \(fileURL.lastPathComponent, privacy: .public)")
-                        } catch {
-                            Self.log.error("Failed to delete cached rule file: \(fileURL.lastPathComponent, privacy: .public), error: \(error.localizedDescription, privacy: .public)")
-                        }
+            for fileURL in urls where extensions.contains(fileURL.pathExtension.lowercased()) {
+                do {
+                    try fileManager.removeItem(at: fileURL)
+                    let name = fileURL.deletingPathExtension().lastPathComponent
+                    if !deletedProviders.contains(name) {
+                        deletedProviders.append(name)
                     }
+                } catch {
+                    Self.log.error("Failed to delete cached rule file: \(fileURL.lastPathComponent, privacy: .public), error: \(error.localizedDescription, privacy: .public)")
                 }
             }
         }
         
-        Self.log.info("Finished clearLocalRuleCache.")
-    }
-
-    private func extractRuleProviderNames(from yaml: String) -> [String] {
-        var names: [String] = []
-        var inRuleProviders = false
-        yaml.enumerateLines { line, stop in
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            if trimmed.hasPrefix("rule-providers:") {
-                inRuleProviders = true
-            } else if inRuleProviders {
-                if !line.hasPrefix(" ") && !line.hasPrefix("\t") && !trimmed.isEmpty {
-                    stop = true
-                } else if line.hasPrefix("  ") && !line.hasPrefix("    ") && trimmed.hasSuffix(":") {
-                    let name = String(trimmed.dropLast()).trimmingCharacters(in: .whitespaces)
-                    if !name.isEmpty {
-                        names.append(name)
-                    }
-                }
-            }
-        }
-        return names
+        Self.log.info("Finished clearLocalRuleCache for providers: \(deletedProviders, privacy: .public)")
     }
 }
 
