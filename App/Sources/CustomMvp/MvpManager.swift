@@ -238,28 +238,21 @@ final class MvpManager {
         printDirectoryStructure()
         Self.log.info("Starting clearLocalRuleCache.")
 
-        let subdirectories = ["rule-providers", "rules", "ruleset"]
-        let extensions = ["mrs", "yaml", "yml"]
-        var deletedProviders: [String] = []
-
-        for subdir in subdirectories {
-            let dirURL = container.appending(path: subdir)
-            guard let urls = try? fileManager.contentsOfDirectory(at: dirURL, includingPropertiesForKeys: nil) else { continue }
-            
-            for fileURL in urls where extensions.contains(fileURL.pathExtension.lowercased()) {
+        let dirURL = container.appending(path: "rule-providers")
+        var deletedFiles: [String] = []
+        
+        if let urls = try? fileManager.contentsOfDirectory(at: dirURL, includingPropertiesForKeys: nil) {
+            for fileURL in urls {
                 do {
                     try fileManager.removeItem(at: fileURL)
-                    let name = fileURL.deletingPathExtension().lastPathComponent
-                    if !deletedProviders.contains(name) {
-                        deletedProviders.append(name)
-                    }
+                    deletedFiles.append(fileURL.lastPathComponent)
                 } catch {
-                    Self.log.error("Failed to delete cached rule file: \(fileURL.lastPathComponent, privacy: .public), error: \(error.localizedDescription, privacy: .public)")
+                    Self.log.error("Failed to delete cached item: \(fileURL.lastPathComponent, privacy: .public), error: \(error.localizedDescription, privacy: .public)")
                 }
             }
         }
         
-        Self.log.info("Finished clearLocalRuleCache for providers: \(deletedProviders, privacy: .public)")
+        Self.log.info("Finished clearLocalRuleCache. Deleted files: \(deletedFiles, privacy: .public)")
     }
 
     private func printDirectoryStructure() {
