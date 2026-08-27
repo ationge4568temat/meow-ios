@@ -233,6 +233,7 @@ final class MvpManager {
         let container = AppGroup.containerURL
         let fileManager = FileManager.default
 
+        printDirectoryStructure()
         Self.log.info("Starting clearLocalRuleCache.")
 
         let subdirectories = ["rule-providers", "rules", "ruleset"]
@@ -257,6 +258,21 @@ final class MvpManager {
         }
         
         Self.log.info("Finished clearLocalRuleCache for providers: \(deletedProviders, privacy: .public)")
+    }
+
+    private func printDirectoryStructure() {
+        let container = AppGroup.containerURL
+        let fileManager = FileManager.default
+        Self.log.info("--- AppGroup Directory Structure ---")
+        Self.log.info("Base Path: \(container.path, privacy: .public)")
+        
+        if let enumerator = fileManager.enumerator(at: container, includingPropertiesForKeys: [.isDirectoryKey]) {
+            for case let fileURL as URL in enumerator {
+                let relativePath = fileURL.path.replacingOccurrences(of: container.path + "/", with: "")
+                Self.log.info("- \(relativePath, privacy: .public)")
+            }
+        }
+        Self.log.info("------------------------------------")
     }
 }
 
