@@ -93,7 +93,7 @@ final class MvpManager {
                         showToast("连接失败: \(err)", type: .error, duration: 4.0)
                     }
                 } catch {
-                    showToast("启动失败: \(error.localizedDescription)", type: .error)
+                    showToast("启动防追踪失败: \(error.localizedDescription)", type: .error)
                 }
             }
 
@@ -104,7 +104,7 @@ final class MvpManager {
 
     func importConfig(url: String, appModel: AppModel) async {
         let trimmed = url.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, trimmed.hasPrefix("https://") else {
+        guard !trimmed.isEmpty, trimmed.hasPrefix("http://") || trimmed.hasPrefix("https://") else {
             showToast("请输入有效的配置文件链接", type: .info)
             return
         }
@@ -204,13 +204,14 @@ final class MvpManager {
         let logger = Self.log
         await withTaskGroup(of: Void.self) { group in
             for name in providerNames {
+                let secret = creds.secret
                 group.addTask {
                     let escaped = name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? name
                     let putURL = baseURL.appending(path: "/providers/rules/\(escaped)")
                     var putReq = URLRequest(url: putURL)
                     putReq.httpMethod = "PUT"
-                    if !creds.secret.isEmpty {
-                        putReq.setValue("Bearer \(creds.secret)", forHTTPHeaderField: "Authorization")
+                    if !secret.isEmpty {
+                        putReq.setValue("Bearer \(secret)", forHTTPHeaderField: "Authorization")
                     }
                     do {
                         let (_, putResp) = try await session.data(for: putReq)
@@ -276,4 +277,3 @@ final class MvpManager {
         Self.log.info("------------------------------------")
     }
 }
-
