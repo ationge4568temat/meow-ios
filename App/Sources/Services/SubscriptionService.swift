@@ -247,8 +247,7 @@ final class SubscriptionService {
         if let http = response as? HTTPURLResponse, !(200 ..< 300).contains(http.statusCode) {
             throw SubscriptionError.http(status: http.statusCode)
         }
-        let processedData = MvpCrypto.decryptIfNecessary(data) // MVP: 如果是加密数据，尝试解密
-        return try await normalize(body: processedData)
+        return try await normalize(body: MvpCrypto.decryptIfNecessary(data)) // MVP: 如果是加密数据，尝试解密
     }
 
     /// Internal-for-tests: runs the YAML sniff + optional conversion.
