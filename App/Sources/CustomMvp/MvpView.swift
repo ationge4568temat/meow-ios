@@ -256,6 +256,7 @@ struct MvpProfileCard: View {
     @State private var urlInput: String = ""
     var isInputFocused: FocusState<Bool>.Binding
     @State private var versionStr: String = "v0"
+    @AppStorage("ruleProvidersVersionSuffix") private var ruleProvidersSuffix: String = ""
 
     private var hasProfile: Bool {
         activeProfile != nil && !mvpManager.showInputArea
@@ -462,7 +463,7 @@ struct MvpProfileCard: View {
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text("更新于：\(updateDateStr)")
-                    Text("版本：\(versionStr)")
+                    Text("版本：\(versionStr)\(ruleProvidersSuffix)")
                 }
                 .font(.system(size: 13, weight: .regular))
                 .foregroundColor(MvpTheme.textSecondary)
@@ -581,6 +582,16 @@ struct MvpView: View {
             }
         }
         .preferredColorScheme(.light)
+        .onChange(of: appModel.vpnManager.stage) { _, stage in
+            if stage == .connected {
+                Task { await mvpManager.fetchRuleProviderCounts() }
+            }
+        }
+        .onAppear {
+            if appModel.vpnManager.stage == .connected {
+                Task { await mvpManager.fetchRuleProviderCounts() }
+            }
+        }
         .fileExporter(
             isPresented: $showingLogExporter,
             document: logExportDocument,
