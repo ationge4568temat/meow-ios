@@ -183,12 +183,34 @@ final class MvpManager {
         }
     }
 
-    func updateSubscription(appModel: AppModel, activeProfile: Profile) async {
+    static let defaultAutoUpdateInterval: TimeInterval = 2 * 24 * 3600 // 2 days
+
+    /// Checks if the active profile's lastUpdated date exceeds the auto-update interval (default 2 days),
+    /// and triggers a silent subscription refresh if needed.
+    func checkAutoUpdate(
+        appModel: AppModel,
+        activeProfile: Profile?,
+        interval: TimeInterval = defaultAutoUpdateInterval
+    ) async {
+        guard let activeProfile, !isUpdating, !activeProfile.url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return
+        }
+        let elapsed = Date.now.timeIntervalSince(activeProfile.lastUpdated)
+        guard elapsed >= interval else {
+            Self.log.debug("checkAutoUpdate skipped: lastUpdated was \(elapsed / 3600, format: .fixed(precision: 1))h ago (threshold: \(interval / 3600, format: .fixed(precision: 0))h)")
+            return
+        }
+
+        Self.log.info("checkAutoUpdate triggered: last updated \(elapsed / 86400, format: .fixed(precision: 1)) days ago")
+        await updateSubscription(appModel: appModel, activeProfile: activeProfile, silent: true)
+    }
+
+    func updateSubscription(appModel: AppModel, activeProfile: Profile, silent: Bool = false) async {
         guard !isUpdating else {
             Self.log.info("updateSubscription skipped: already updating")
             return
         }
-        Self.log.info("updateSubscription starting for profile: \(activeProfile.name, privacy: .public)")
+        Self.log.info("updateSubscription starting for profile: \(activeProfile.name, privacy: .public) (silent: \(silent, privacy: .public))")
         isUpdating = true
         defer { isUpdating = false }
 
@@ -204,10 +226,14 @@ final class MvpManager {
             }
 
             Self.log.info("updateSubscription succeeded for profile: \(activeProfile.name, privacy: .public)")
-            showToast("已同步至最新", type: .success)
+            if !silent {
+                showToast("已同步至最新", type: .success)
+            }
         } catch {
             Self.log.error("updateSubscription failed with error: \(error.localizedDescription, privacy: .public)")
-            showToast("更新失败: \(error.localizedDescription)", type: .error)
+            if !silent {
+                showToast("更新失败: \(error.localizedDescription)", type: .error)
+            }
         }
     }
 
