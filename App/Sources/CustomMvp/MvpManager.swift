@@ -37,6 +37,7 @@ final class MvpManager {
     }
 
     func showToast(_ message: String, type: MvpToastType = .info, duration: TimeInterval = 2.5) {
+        Self.log.debug("showToast [\(String(describing: type))]: \(message, privacy: .public)")
         toastTask?.cancel()
         toastMessage = message
         toastType = type
@@ -54,6 +55,7 @@ final class MvpManager {
 
     func toggleConnection(appModel: AppModel, activeProfile: Profile?) {
         guard !isConnectionToggling, !isUpdating, !isImporting else {
+            Self.log.info("toggleConnection ignored: busy state (isConnectionToggling: \(self.isConnectionToggling, privacy: .public), isUpdating: \(self.isUpdating, privacy: .public), isImporting: \(self.isImporting, privacy: .public))")
             if isUpdating || isImporting {
                 showToast("操作处理中，请稍候...", type: .warning, duration: 1.5)
             }
@@ -61,6 +63,7 @@ final class MvpManager {
         }
 
         guard let activeProfile, !activeProfile.id.uuidString.isEmpty else {
+            Self.log.info("toggleConnection requested but no active profile configured.")
             showInputArea = true
             showToast("请先导入配置文件", type: .info)
             return
@@ -76,8 +79,11 @@ final class MvpManager {
             isActiveState = false
         }
 
+        Self.log.info("toggleConnection triggered (targetAction: \(isActiveState ? "disconnect" : "connect", privacy: .public), currentStage: \(String(describing: appModel.vpnManager.stage), privacy: .public))")
+
         Task {
             if isActiveState {
+                Self.log.info("Disconnecting VPN via vpnManager...")
                 await appModel.vpnManager.disconnect()
             } else {
                 do {
@@ -86,13 +92,18 @@ final class MvpManager {
                     defaults.set(true, forKey: PreferenceKey.blockHTTP3)
                     
                     // Ensure active config is written before connecting
+                    Self.log.info("Writing active config for profile: \(activeProfile.name, privacy: .public) and initiating connection...")
                     try appModel.subscriptionService.writeActiveConfig(activeProfile)
                     await appModel.vpnManager.connect()
                     
                     if let err = appModel.vpnManager.lastError {
+                        Self.log.error("VPN connection failed with error: \(err, privacy: .public)")
                         showToast("连接失败: \(err)", type: .error, duration: 4.0)
+                    } else {
+                        Self.log.info("VPN connection initiated successfully.")
                     }
                 } catch {
+                    Self.log.error("Failed to start VPN: \(error.localizedDescription, privacy: .public)")
                     showToast("启动防追踪失败: \(error.localizedDescription)", type: .error)
                 }
             }
@@ -105,10 +116,12 @@ final class MvpManager {
     func importConfig(url: String, appModel: AppModel) async {
         let trimmed = url.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, trimmed.hasPrefix("http://") || trimmed.hasPrefix("https://") else {
+            Self.log.warning("importConfig rejected: Invalid URL: \(url, privacy: .public)")
             showToast("请输入有效的配置文件链接", type: .info)
             return
         }
 
+        Self.log.info("importConfig starting for URL: \(trimmed, privacy: .public)")
         isImporting = true
         defer { isImporting = false }
 
@@ -118,31 +131,42 @@ final class MvpManager {
             let fetch = FetchDescriptor<Profile>(predicate: #Predicate { $0.name == profileName })
             let profile: Profile
             if let existing = try? context.fetch(fetch).first {
+                Self.log.info("Found existing default profile: \(existing.id.uuidString, privacy: .public). Updating info and refreshing...")
                 try appModel.subscriptionService.updateInfo(existing, name: profileName, url: trimmed)
                 try await appModel.subscriptionService.refresh(existing)
                 try appModel.subscriptionService.select(existing)
                 profile = existing
             } else {
+                Self.log.info("Creating new default profile: \(profileName, privacy: .public)...")
                 let created = try await appModel.subscriptionService.add(name: profileName, url: trimmed)
                 try appModel.subscriptionService.select(created)
                 profile = created
             }
 
+            Self.log.info("importConfig successfully saved profile: \(profile.id.uuidString, privacy: .public)")
+
             if appModel.vpnManager.stage == .connected {
+                Self.log.info("VPN is connected; refreshing rule providers via API...")
                 await refreshRuleProviders(appModel: appModel, activeProfile: profile)
             } else {
+                Self.log.info("VPN is not connected; clearing local rule cache...")
                 clearLocalRuleCache(activeProfile: profile)
             }
 
             showInputArea = false
             showToast("导入成功", type: .success)
         } catch {
+            Self.log.error("importConfig failed with error: \(error.localizedDescription, privacy: .public)")
             showToast("导入失败: \(error.localizedDescription)", type: .error)
         }
     }
 
     func updateSubscription(appModel: AppModel, activeProfile: Profile) async {
-        guard !isUpdating else { return }
+        guard !isUpdating else {
+            Self.log.info("updateSubscription skipped: already updating")
+            return
+        }
+        Self.log.info("updateSubscription starting for profile: \(activeProfile.name, privacy: .public)")
         isUpdating = true
         defer { isUpdating = false }
 
@@ -150,13 +174,17 @@ final class MvpManager {
             try await appModel.subscriptionService.refresh(activeProfile)
 
             if appModel.vpnManager.stage == .connected {
+                Self.log.info("VPN is connected; refreshing rule providers via API...")
                 await refreshRuleProviders(appModel: appModel, activeProfile: activeProfile)
             } else {
+                Self.log.info("VPN is not connected; clearing local rule cache...")
                 clearLocalRuleCache(activeProfile: activeProfile)
             }
 
+            Self.log.info("updateSubscription succeeded for profile: \(activeProfile.name, privacy: .public)")
             showToast("已同步至最新", type: .success)
         } catch {
+            Self.log.error("updateSubscription failed with error: \(error.localizedDescription, privacy: .public)")
             showToast("更新失败: \(error.localizedDescription)", type: .error)
         }
     }
@@ -243,7 +271,7 @@ final class MvpManager {
         let container = AppGroup.containerURL
         let fileManager = FileManager.default
 
-        printDirectoryStructure()
+        logDirectoryStructure()
         Self.log.info("Starting clearLocalRuleCache.")
 
         let dirURL = container.appending(path: "rule-providers")
@@ -263,7 +291,7 @@ final class MvpManager {
         Self.log.info("Finished clearLocalRuleCache. Deleted files: \(deletedFiles, privacy: .public)")
     }
 
-    private func printDirectoryStructure() {
+    func logDirectoryStructure() {
         let container = AppGroup.containerURL
         let fileManager = FileManager.default
         Self.log.info("--- AppGroup Directory Structure ---")
@@ -276,5 +304,10 @@ final class MvpManager {
             }
         }
         Self.log.info("------------------------------------")
+    }
+
+    @available(*, deprecated, renamed: "logDirectoryStructure")
+    private func printDirectoryStructure() {
+        logDirectoryStructure()
     }
 }
