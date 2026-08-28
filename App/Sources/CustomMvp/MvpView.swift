@@ -3,7 +3,7 @@ import SwiftData
 import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
-
+import os
 
 @MainActor
 struct MvpHeaderBar: View {
@@ -62,6 +62,7 @@ struct MvpHeaderBar: View {
 
         if minimalTapCount >= 5 {
             minimalTapCount = 0
+            MvpView.log.info("Minimal header 5-tap gesture triggered: switching to full meow-ios mode")
             withAnimation {
                 mvpManager.isMvpMode = false
             }
@@ -116,12 +117,14 @@ struct MvpToggleSwitch: View {
         }
         .padding(.vertical, 24)
         .onTapGesture {
+            MvpView.log.info("Toggle switch tapped (current isOn: \(isOn, privacy: .public))")
             withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                 action()
             }
         }
     }
 }
+
 
 @MainActor
 struct MvpStatusHero: View {
@@ -345,6 +348,7 @@ struct MvpProfileCard: View {
 
             if hasProfile {
                 Button(action: {
+                    MvpView.log.info("Reset profile button tapped, expanding input area")
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                         mvpManager.showInputArea = true 
                     }
@@ -362,6 +366,7 @@ struct MvpProfileCard: View {
                 })
             } else if activeProfile != nil {
                 Button(action: {
+                    MvpView.log.info("Collapse profile input button tapped")
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                         mvpManager.showInputArea = false
                     }
@@ -409,6 +414,7 @@ struct MvpProfileCard: View {
                 Button(action: {
                     if let pasted = UIPasteboard.general.string {
                         urlInput = pasted.trimmingCharacters(in: .whitespacesAndNewlines)
+                        MvpView.log.debug("Pasted URL into input from clipboard")
                     }
                 }, label: {
                     Image(systemName: "doc.on.clipboard")
@@ -421,6 +427,7 @@ struct MvpProfileCard: View {
             }
 
             Button(action: {
+                MvpView.log.info("Download and import button tapped")
                 Task {
                     await mvpManager.importConfig(url: urlInput, appModel: appModel)
                 }
@@ -468,6 +475,7 @@ struct MvpProfileCard: View {
 
             Button(action: {
                 if let profile = activeProfile {
+                    MvpView.log.info("Update subscription button tapped for profile: \(profile.name, privacy: .public)")
                     Task {
                         await mvpManager.updateSubscription(appModel: appModel, activeProfile: profile)
                     }
@@ -500,6 +508,8 @@ struct MvpProfileCard: View {
 
 @MainActor
 struct MvpView: View {
+    static let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "meow-ios", category: "mvp-ui")
+
     @Environment(AppModel.self) private var appModel
     @Query private var profiles: [Profile]
 
@@ -624,10 +634,12 @@ struct MvpView: View {
     }
 
     private func exportLogs() async {
+        Self.log.info("Export logs initiated from UI...")
         exportingLogs = true
         defer { exportingLogs = false }
         let text = await Task.detached { MvpLogExporter.collectCombinedLogs() }.value
         logExportDocument = MvpLogExportDocument(text: text)
         showingLogExporter = true
+        Self.log.info("Log export document presented.")
     }
 }
