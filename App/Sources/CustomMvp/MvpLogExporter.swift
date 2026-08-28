@@ -79,15 +79,13 @@ enum MvpLogExporter: Sendable {
 
     private static func collectOSLogs() -> String {
         var lines: [String] = []
-        let df = DateFormatter()
-        df.dateFormat = "yyyy-MM-dd HH:mm:ss.SSS"
         do {
             let store = try OSLogStore(scope: .currentProcessIdentifier)
             let since = store.position(date: Date().addingTimeInterval(-3600))
             let entries = try store.getEntries(at: since)
             for entry in entries {
                 guard let log = entry as? OSLogEntryLog else { continue }
-                let ts = df.string(from: log.date)
+                let ts = log.date.formatted(.iso8601)
                 let lvl = switch log.level {
                 case .debug: "DEBUG"
                 case .info: "INFO"
