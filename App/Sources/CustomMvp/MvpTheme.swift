@@ -2,7 +2,7 @@ import SwiftUI
 
 /// MvpTheme defines the clean, light design system colors and styling tokens
 /// for the Block Ad MVP UI on iOS.
-enum MvpTheme {
+enum MvpTheme: Sendable {
     // Backgrounds & Surface Card Colors
     static let bgPrimary = Color(red: 0xF8 / 255.0, green: 0xFA / 255.0, blue: 0xFC / 255.0) // #F8FAFC
     static let cardBg = Color.white // #FFFFFF
