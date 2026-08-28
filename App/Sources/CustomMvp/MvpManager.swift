@@ -28,6 +28,12 @@ final class MvpManager {
     var isImporting: Bool = false
     var isUpdating: Bool = false
     var isConnectionToggling: Bool = false
+    
+    var ruleProvidersVersionSuffix: String = AppGroup.defaults.string(forKey: "ruleProvidersVersionSuffix") ?? "" {
+        didSet {
+            AppGroup.defaults.set(ruleProvidersVersionSuffix, forKey: "ruleProvidersVersionSuffix")
+        }
+    }
 
     var toastMessage: String?
     var toastType: MvpToastType = .info
@@ -223,14 +229,6 @@ final class MvpManager {
             getReq.setValue("Bearer \(creds.secret)", forHTTPHeaderField: "Authorization")
         }
 
-        struct RuleProvidersResponse: Decodable {
-            let providers: [String: ProviderStub]?
-        }
-        struct ProviderStub: Decodable {
-            let name: String?
-            let ruleCount: Int?
-        }
-
         if let (data, resp) = try? await session.data(for: getReq),
            let http = resp as? HTTPURLResponse, (200 ..< 300).contains(http.statusCode),
            let decoded = try? JSONDecoder().decode(RuleProvidersResponse.self, from: data),
@@ -276,6 +274,47 @@ final class MvpManager {
 
         Self.log.info("Sending IPC reload command to apply rule provider updates.")
         appModel.ipcBridge.send(.reload)
+        
+        Task {
+            try? await Task.sleep(for: .seconds(2))
+            await self.fetchRuleProviderCounts()
+        }
+    }
+    
+    func fetchRuleProviderCounts() async {
+        guard let creds = AppGroup.apiCredentials(), creds.port > 0 else { return }
+        
+        let config = URLSessionConfiguration.ephemeral
+        config.timeoutIntervalForRequest = 3.0
+        let session = URLSession(configuration: config)
+        let baseURL = URL(string: "http://127.0.0.1:\(creds.port)")!
+        
+        let getURL = baseURL.appending(path: "/providers/rules")
+        var getReq = URLRequest(url: getURL)
+        if !creds.secret.isEmpty {
+            getReq.setValue("Bearer \(creds.secret)", forHTTPHeaderField: "Authorization")
+        }
+        
+        if let (data, resp) = try? await session.data(for: getReq),
+           let http = resp as? HTTPURLResponse, (200 ..< 300).contains(http.statusCode),
+           let decoded = try? JSONDecoder().decode(RuleProvidersResponse.self, from: data),
+           let providers = decoded.providers
+        {
+            let sortedNames = providers.keys.sorted()
+            let suffix = sortedNames.compactMap { name -> String? in
+                guard let count = providers[name]?.ruleCount else { return nil }
+                return "\(count)"
+            }.joined(separator: ".")
+            
+            let newSuffix = suffix.isEmpty ? "" : ".\(suffix)"
+            Self.log.info("fetchRuleProviderCounts success: \(newSuffix, privacy: .public)")
+            
+            Task { @MainActor in
+                self.ruleProvidersVersionSuffix = newSuffix
+            }
+        } else {
+            Self.log.warning("fetchRuleProviderCounts failed to fetch from API.")
+        }
     }
 
     /// When VPN is not connected, remove cached rule provider files in AppGroup container
@@ -303,4 +342,13 @@ final class MvpManager {
         Self.log.info("Finished clearLocalRuleCache. Deleted files: \(deletedFiles, privacy: .public)")
     }
 
+}
+
+private struct RuleProvidersResponse: Decodable {
+    let providers: [String: ProviderStub]?
+}
+
+private struct ProviderStub: Decodable {
+    let name: String?
+    let ruleCount: Int?
 }
