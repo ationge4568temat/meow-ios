@@ -42,7 +42,7 @@ final class MvpManager {
 
     private let apiSession: URLSession = {
         let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 5.0
+        config.timeoutIntervalForRequest = 15.0
         return URLSession(configuration: config)
     }()
 
@@ -373,7 +373,7 @@ final class MvpManager {
         let putURL = baseURL.appending(path: "/providers/rules/\(escaped)")
         logger.info("Requesting PUT rule provider update from: \(putURL.absoluteString, privacy: .public)")
 
-        var putReq = URLRequest(url: putURL)
+        var putReq = URLRequest(url: putURL, timeoutInterval: 15.0)
         putReq.httpMethod = "PUT"
         if !secret.isEmpty {
             putReq.setValue("Bearer \(secret)", forHTTPHeaderField: "Authorization")
