@@ -62,7 +62,7 @@ final class MvpManager {
             return
         }
 
-        if appModel.vpnManager.stage == .disconnecting {
+        if appModel.vpnManager.stage == .stopping {
             Self.log.info("toggleConnection ignored: VPN is currently disconnecting.")
             showToast("正在断开服务，请稍候...", type: .info, duration: 1.5)
             return
