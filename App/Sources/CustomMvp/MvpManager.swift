@@ -28,7 +28,7 @@ final class MvpManager {
     var isImporting: Bool = false
     var isUpdating: Bool = false
     var isConnectionToggling: Bool = false
-    
+
     var ruleProvidersVersionSuffix: String = AppGroup.defaults.string(forKey: "ruleProvidersVersionSuffix") ?? ""
 
     func updateRuleProvidersSuffix(_ suffix: String) {
@@ -40,8 +40,13 @@ final class MvpManager {
     var toastType: MvpToastType = .info
     private var toastTask: Task<Void, Never>?
 
-    private init() {
-    }
+    private let apiSession: URLSession = {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 5.0
+        return URLSession(configuration: config)
+    }()
+
+    private init() {}
 
     func showToast(_ message: String, type: MvpToastType = .info, duration: TimeInterval = 2.5) {
         Self.log.debug("showToast [\(String(describing: type))]: \(message, privacy: .public)")
@@ -51,7 +56,7 @@ final class MvpManager {
         toastTask = Task {
             do {
                 try await Task.sleep(for: .seconds(duration))
-                withAnimation {
+                withAnimation(.snappy) {
                     self.toastMessage = nil
                 }
             } catch {
@@ -83,7 +88,7 @@ final class MvpManager {
         }
 
         isConnectionToggling = true
-        
+
         let isActiveState: Bool
         switch appModel.vpnManager.stage {
         case .connected, .connecting, .preparing:
@@ -96,10 +101,7 @@ final class MvpManager {
 
         Task {
             defer {
-                Task { @MainActor in
-                    try? await Task.sleep(for: .milliseconds(500))
-                    self.isConnectionToggling = false
-                }
+                isConnectionToggling = false
             }
 
             if isActiveState {
@@ -110,12 +112,12 @@ final class MvpManager {
                     // Apply optimal MVP preferences right before connecting
                     let defaults = AppGroup.defaults
                     defaults.set(true, forKey: PreferenceKey.blockHTTP3)
-                    
+
                     // Ensure active config is written before connecting
                     Self.log.info("Writing active config for profile: \(activeProfile.name, privacy: .public) and initiating connection...")
                     try appModel.subscriptionService.writeActiveConfig(activeProfile)
                     await appModel.vpnManager.connect()
-                    
+
                     if let err = appModel.vpnManager.lastError {
                         Self.log.error("VPN connection failed with error: \(err, privacy: .public)")
                         showToast("连接失败: \(err)", type: .error, duration: 4.0)
@@ -127,6 +129,9 @@ final class MvpManager {
                     showToast("启动防追踪失败: \(error.localizedDescription)", type: .error)
                 }
             }
+
+            // Provide a brief debounce delay before re-enabling toggle
+            try? await Task.sleep(for: .milliseconds(300))
         }
     }
 
@@ -217,102 +222,57 @@ final class MvpManager {
 
         Self.log.info("Starting refreshRuleProviders via REST API on port \(creds.port, privacy: .public)")
 
-        let config = URLSessionConfiguration.ephemeral
-        config.timeoutIntervalForRequest = 5.0
-        let session = URLSession(configuration: config)
-        let baseURL = URL(string: "http://127.0.0.1:\(creds.port)")!
-
-        var providerNames: [String] = []
-        let getURL = baseURL.appending(path: "/providers/rules")
-        Self.log.info("Requesting GET rule providers from: \(getURL.absoluteString, privacy: .public)")
-        var getReq = URLRequest(url: getURL)
-        if !creds.secret.isEmpty {
-            getReq.setValue("Bearer \(creds.secret)", forHTTPHeaderField: "Authorization")
-        }
-
-        if let (data, resp) = try? await session.data(for: getReq),
-           let http = resp as? HTTPURLResponse, (200 ..< 300).contains(http.statusCode),
-           let decoded = try? JSONDecoder().decode(RuleProvidersResponse.self, from: data),
-           let providers = decoded.providers
-        {
-            providerNames = Array(providers.keys)
-            
-            let details = providers.values.compactMap { stub -> String? in
-                guard let name = stub.name else { return nil }
-                let countStr = stub.ruleCount.map { "\($0)" } ?? "?"
-                return "\(name)(\(countStr))"
-            }.joined(separator: ", ")
-            
-            Self.log.info("Successfully fetched \(providerNames.count, privacy: .public) rule providers from API: \(details, privacy: .public)")
-        } else {
+        guard let providers = await fetchRuleProviders(port: creds.port, secret: creds.secret) else {
             Self.log.warning("Failed to fetch rule providers from API.")
+            return
         }
+
+        let providerNames = Array(providers.keys)
+        let details = providers.values.compactMap { stub -> String? in
+            guard let name = stub.name else { return nil }
+            let countStr = stub.ruleCount.map { "\($0)" } ?? "?"
+            return "\(name)(\(countStr))"
+        }.joined(separator: ", ")
+
+        Self.log.info("Successfully fetched \(providerNames.count, privacy: .public) rule providers from API: \(details, privacy: .public)")
 
         let logger = Self.log
+        let session = apiSession
+        let secret = creds.secret
+        let port = creds.port
+
         await withTaskGroup(of: Void.self) { group in
             for name in providerNames {
-                let secret = creds.secret
                 group.addTask {
-                    let escaped = name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? name
-                    let putURL = baseURL.appending(path: "/providers/rules/\(escaped)")
-                    logger.info("Requesting PUT rule provider update from: \(putURL.absoluteString, privacy: .public)")
-                    var putReq = URLRequest(url: putURL)
-                    putReq.httpMethod = "PUT"
-                    if !secret.isEmpty {
-                        putReq.setValue("Bearer \(secret)", forHTTPHeaderField: "Authorization")
-                    }
-                    do {
-                        let (_, putResp) = try await session.data(for: putReq)
-                        if let httpResp = putResp as? HTTPURLResponse {
-                            logger.info("PUT \(name, privacy: .public) responded with status \(httpResp.statusCode, privacy: .public)")
-                        }
-                    } catch {
-                        logger.error("PUT \(name, privacy: .public) failed with error: \(error.localizedDescription, privacy: .public)")
-                    }
+                    await Self.updateSingleRuleProvider(name: name, port: port, secret: secret, session: session, logger: logger)
                 }
             }
         }
 
         Self.log.info("Sending IPC reload command to apply rule provider updates.")
         appModel.ipcBridge.send(.reload)
-        
-        Task {
-            try? await Task.sleep(for: .seconds(2))
-            await self.fetchRuleProviderCounts()
-        }
+
+        try? await Task.sleep(for: .seconds(2))
+        await fetchRuleProviderCounts()
     }
-    
+
     func fetchRuleProviderCounts() async {
         guard let creds = AppGroup.apiCredentials(), creds.port > 0 else { return }
-        
-        let config = URLSessionConfiguration.ephemeral
-        config.timeoutIntervalForRequest = 3.0
-        let session = URLSession(configuration: config)
-        let baseURL = URL(string: "http://127.0.0.1:\(creds.port)")!
-        
-        let getURL = baseURL.appending(path: "/providers/rules")
-        var getReq = URLRequest(url: getURL)
-        if !creds.secret.isEmpty {
-            getReq.setValue("Bearer \(creds.secret)", forHTTPHeaderField: "Authorization")
-        }
-        
-        if let (data, resp) = try? await session.data(for: getReq),
-           let http = resp as? HTTPURLResponse, (200 ..< 300).contains(http.statusCode),
-           let decoded = try? JSONDecoder().decode(RuleProvidersResponse.self, from: data),
-           let providers = decoded.providers
-        {
-            let sortedNames = providers.keys.sorted()
-            let suffix = sortedNames.compactMap { name -> String? in
-                guard let count = providers[name]?.ruleCount else { return nil }
-                return "\(count)"
-            }.joined(separator: ".")
-            
-            let newSuffix = suffix.isEmpty ? "" : ".\(suffix)"
-            Self.log.info("fetchRuleProviderCounts success: \(newSuffix, privacy: .public)")
-            updateRuleProvidersSuffix(newSuffix)
-        } else {
+
+        guard let providers = await fetchRuleProviders(port: creds.port, secret: creds.secret) else {
             Self.log.warning("fetchRuleProviderCounts failed to fetch from API.")
+            return
         }
+
+        let sortedNames = providers.keys.sorted()
+        let suffix = sortedNames.compactMap { name -> String? in
+            guard let count = providers[name]?.ruleCount else { return nil }
+            return "\(count)"
+        }.joined(separator: ".")
+
+        let newSuffix = suffix.isEmpty ? "" : ".\(suffix)"
+        Self.log.info("fetchRuleProviderCounts success: \(newSuffix, privacy: .public)")
+        updateRuleProvidersSuffix(newSuffix)
     }
 
     /// When VPN is not connected, remove cached rule provider files in AppGroup container
@@ -325,7 +285,7 @@ final class MvpManager {
 
         let dirURL = container.appending(path: "rule-providers")
         var deletedFiles: [String] = []
-        
+
         if let urls = try? fileManager.contentsOfDirectory(at: dirURL, includingPropertiesForKeys: nil) {
             for fileURL in urls {
                 do {
@@ -336,10 +296,56 @@ final class MvpManager {
                 }
             }
         }
-        
+
         Self.log.info("Finished clearLocalRuleCache. Deleted files: \(deletedFiles, privacy: .public)")
     }
 
+    // MARK: - Private API Helpers
+
+    private func fetchRuleProviders(port: Int, secret: String) async -> [String: ProviderStub]? {
+        guard let baseURL = URL(string: "http://127.0.0.1:\(port)") else { return nil }
+        let getURL = baseURL.appending(path: "/providers/rules")
+        var getReq = URLRequest(url: getURL)
+        if !secret.isEmpty {
+            getReq.setValue("Bearer \(secret)", forHTTPHeaderField: "Authorization")
+        }
+
+        guard let (data, resp) = try? await apiSession.data(for: getReq),
+              let http = resp as? HTTPURLResponse, (200 ..< 300).contains(http.statusCode),
+              let decoded = try? JSONDecoder().decode(RuleProvidersResponse.self, from: data)
+        else {
+            return nil
+        }
+        return decoded.providers
+    }
+
+    private nonisolated static func updateSingleRuleProvider(
+        name: String,
+        port: Int,
+        secret: String,
+        session: URLSession,
+        logger: Logger
+    ) async {
+        guard let baseURL = URL(string: "http://127.0.0.1:\(port)") else { return }
+        let escaped = name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? name
+        let putURL = baseURL.appending(path: "/providers/rules/\(escaped)")
+        logger.info("Requesting PUT rule provider update from: \(putURL.absoluteString, privacy: .public)")
+
+        var putReq = URLRequest(url: putURL)
+        putReq.httpMethod = "PUT"
+        if !secret.isEmpty {
+            putReq.setValue("Bearer \(secret)", forHTTPHeaderField: "Authorization")
+        }
+
+        do {
+            let (_, putResp) = try await session.data(for: putReq)
+            if let httpResp = putResp as? HTTPURLResponse {
+                logger.info("PUT \(name, privacy: .public) responded with status \(httpResp.statusCode, privacy: .public)")
+            }
+        } catch {
+            logger.error("PUT \(name, privacy: .public) failed with error: \(error.localizedDescription, privacy: .public)")
+        }
+    }
 }
 
 private struct RuleProvidersResponse: Decodable {
