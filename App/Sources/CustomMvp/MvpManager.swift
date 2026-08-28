@@ -213,7 +213,7 @@ final class MvpManager {
         Self.log.info("checkAutoUpdate evaluated for profile '\(activeProfile.name, privacy: .public)': lastUpdated was \(elapsedHours, format: .fixed(precision: 1))h ago (threshold: \(thresholdHours, format: .fixed(precision: 1))h, date: \(activeProfile.lastUpdated.formatted(), privacy: .public))")
 
         guard elapsed >= interval else {
-            Self.log.info("checkAutoUpdate: profile is up-to-date, skipping auto-update")
+            Self.log.info("checkAutoUpdate: profile is up-to-date, skipping...")
             return
         }
 
