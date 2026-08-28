@@ -3,24 +3,24 @@ import CryptoKit
 import os
 
 /// 提供 MVP 配置文件加密/解密的支持
-public enum MvpCrypto {
+public enum MvpCrypto: Sendable {
     private static let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "meow-ios", category: "mvp-crypto")
 
     /// AES-256 共享密钥 (32 bytes)
     /// 提示：后端需使用相同 Key 进行 AES-GCM 加密。
     /// 使用硬编码字符串的 SHA256 哈希值，可以根据需要随时替换为其他的 32 字节 Key。
-    private static var symmetricKey: SymmetricKey {
-        let keyData = SHA256.hash(data: "FkAdMvpSecretKey".data(using: .utf8)!)
+    private static let symmetricKey: SymmetricKey = {
+        let keyData = SHA256.hash(data: Data("FkAdMvpSecretKey".utf8))
         return SymmetricKey(data: keyData)
-    }
+    }()
 
     /// 尝试解密网络返回的配置文件数据
     ///
     /// - Parameter data: 网络返回的原始数据
     /// - Returns: 解密后的明文数据。如果原本就是明文或者解密失败，则原样返回。
     public static func decryptIfNecessary(_ data: Data) -> Data {
-        // 1. 如果数据本身就是明文 YAML，直接返回，无需解密
-        if isPlaintextYAML(data) {
+        // 1. 如果数据量过小（小于 AES-GCM 最小长度 28 字节）或者本身就是明文 YAML，直接返回，无需解密
+        if data.count < 28 || isPlaintextYAML(data) {
             return data
         }
 
