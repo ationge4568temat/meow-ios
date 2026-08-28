@@ -192,16 +192,32 @@ final class MvpManager {
         activeProfile: Profile?,
         interval: TimeInterval = defaultAutoUpdateInterval
     ) async {
-        guard let activeProfile, !isUpdating, !activeProfile.url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+        guard let activeProfile else {
+            Self.log.info("checkAutoUpdate skipped: activeProfile is nil")
             return
         }
-        let elapsed = Date.now.timeIntervalSince(activeProfile.lastUpdated)
-        guard elapsed >= interval else {
-            Self.log.debug("checkAutoUpdate skipped: lastUpdated was \(elapsed / 3600, format: .fixed(precision: 1))h ago (threshold: \(interval / 3600, format: .fixed(precision: 0))h)")
+        guard !isUpdating else {
+            Self.log.info("checkAutoUpdate skipped: update already in progress")
+            return
+        }
+        let trimmedURL = activeProfile.url.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedURL.isEmpty else {
+            Self.log.info("checkAutoUpdate skipped: profile '\(activeProfile.name, privacy: .public)' has empty URL")
             return
         }
 
-        Self.log.info("checkAutoUpdate triggered: last updated \(elapsed / 86400, format: .fixed(precision: 1)) days ago")
+        let elapsed = Date.now.timeIntervalSince(activeProfile.lastUpdated)
+        let elapsedHours = elapsed / 3600
+        let thresholdHours = interval / 3600
+
+        Self.log.info("checkAutoUpdate evaluated for profile '\(activeProfile.name, privacy: .public)': lastUpdated was \(elapsedHours, format: .fixed(precision: 1))h ago (threshold: \(thresholdHours, format: .fixed(precision: 1))h, date: \(activeProfile.lastUpdated.formatted(), privacy: .public))")
+
+        guard elapsed >= interval else {
+            Self.log.info("checkAutoUpdate: profile is up-to-date, skipping auto-update")
+            return
+        }
+
+        Self.log.info("checkAutoUpdate triggered: profile is outdated (\(elapsedHours / 24, format: .fixed(precision: 1)) days >= \(thresholdHours / 24, format: .fixed(precision: 1)) days), starting silent refresh...")
         await updateSubscription(appModel: appModel, activeProfile: activeProfile, silent: true)
     }
 
