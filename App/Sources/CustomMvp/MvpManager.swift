@@ -62,6 +62,12 @@ final class MvpManager {
             return
         }
 
+        if appModel.vpnManager.stage == .disconnecting {
+            Self.log.info("toggleConnection ignored: VPN is currently disconnecting.")
+            showToast("正在断开服务，请稍候...", type: .info, duration: 1.5)
+            return
+        }
+
         guard let activeProfile, !activeProfile.id.uuidString.isEmpty else {
             Self.log.info("toggleConnection requested but no active profile configured.")
             showInputArea = true
@@ -82,6 +88,13 @@ final class MvpManager {
         Self.log.info("toggleConnection triggered (targetAction: \(isActiveState ? "disconnect" : "connect", privacy: .public), currentStage: \(String(describing: appModel.vpnManager.stage), privacy: .public))")
 
         Task {
+            defer {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(500))
+                    self.isConnectionToggling = false
+                }
+            }
+
             if isActiveState {
                 Self.log.info("Disconnecting VPN via vpnManager...")
                 await appModel.vpnManager.disconnect()
@@ -107,17 +120,14 @@ final class MvpManager {
                     showToast("启动防追踪失败: \(error.localizedDescription)", type: .error)
                 }
             }
-
-            try? await Task.sleep(for: .milliseconds(500))
-            self.isConnectionToggling = false
         }
     }
 
-    func importConfig(url: String, appModel: AppModel) async {
+    func importConfig(url: String, appModel: AppModel, modelContext: ModelContext? = nil) async {
         let trimmed = url.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, trimmed.hasPrefix("http://") || trimmed.hasPrefix("https://") else {
-            Self.log.warning("importConfig rejected: Invalid URL: \(url, privacy: .public)")
-            showToast("请输入有效的配置文件链接", type: .info)
+        guard !trimmed.isEmpty, trimmed.hasPrefix("https://") else {
+            Self.log.warning("importConfig rejected: Invalid or non-HTTPS URL: \(url, privacy: .public)")
+            showToast("请输入有效的 HTTPS 配置链接", type: .info)
             return
         }
 
@@ -126,7 +136,7 @@ final class MvpManager {
         defer { isImporting = false }
 
         do {
-            let context = AppModelContainer.shared.container.mainContext
+            let context = modelContext ?? AppModelContainer.shared.container.mainContext
             let profileName = Self.defaultProfileName
             let fetch = FetchDescriptor<Profile>(predicate: #Predicate { $0.name == profileName })
             let profile: Profile
@@ -206,7 +216,9 @@ final class MvpManager {
         let baseURL = URL(string: "http://127.0.0.1:\(creds.port)")!
 
         var providerNames: [String] = []
-        var getReq = URLRequest(url: baseURL.appending(path: "/providers/rules"))
+        let getURL = baseURL.appending(path: "/providers/rules")
+        Self.log.info("Requesting GET rule providers from: \(getURL.absoluteString, privacy: .public)")
+        var getReq = URLRequest(url: getURL)
         if !creds.secret.isEmpty {
             getReq.setValue("Bearer \(creds.secret)", forHTTPHeaderField: "Authorization")
         }
@@ -244,6 +256,7 @@ final class MvpManager {
                 group.addTask {
                     let escaped = name.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? name
                     let putURL = baseURL.appending(path: "/providers/rules/\(escaped)")
+                    logger.info("Requesting PUT rule provider update from: \(putURL.absoluteString, privacy: .public)")
                     var putReq = URLRequest(url: putURL)
                     putReq.httpMethod = "PUT"
                     if !secret.isEmpty {
@@ -271,7 +284,12 @@ final class MvpManager {
         let container = AppGroup.containerURL
         let fileManager = FileManager.default
 
-        logDirectoryStructure()
+        #if DEBUG
+        let shouldLogDirectory = true
+        if shouldLogDirectory {
+            logDirectoryStructure()
+        }
+        #endif
         Self.log.info("Starting clearLocalRuleCache.")
 
         let dirURL = container.appending(path: "rule-providers")
