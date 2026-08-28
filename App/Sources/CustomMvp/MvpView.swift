@@ -20,7 +20,7 @@ struct MvpHeaderBar: View {
             // Centered Title with tap gesture
             Text("Block Ad")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(MvpTheme.textPrimary)
+                .foregroundStyle(MvpTheme.textPrimary)
                 .contentShape(Rectangle())
                 .onTapGesture {
                     handleMinimalTap()
@@ -35,11 +35,12 @@ struct MvpHeaderBar: View {
                     ZStack {
                         if exportingLogs {
                             ProgressView()
+                                .progressViewStyle(.circular)
                                 .scaleEffect(0.8)
                         } else {
                             Image(systemName: "doc.plaintext")
                                 .font(.system(size: 14))
-                                .foregroundColor(MvpTheme.textSecondary)
+                                .foregroundStyle(MvpTheme.textSecondary)
                                 .opacity(0.8)
                         }
                     }
@@ -63,7 +64,7 @@ struct MvpHeaderBar: View {
         if minimalTapCount >= 5 {
             minimalTapCount = 0
             MvpView.log.info("Minimal header 5-tap gesture triggered: switching to full meow-ios mode")
-            withAnimation {
+            withAnimation(.snappy) {
                 mvpManager.isMvpMode = false
             }
             mvpManager.showToast("已切换至高级模式", type: .info)
@@ -86,7 +87,7 @@ struct MvpToggleSwitch: View {
             // Thumb container
             HStack {
                 if isOn { Spacer() }
-                
+
                 // Thumb
                 ZStack {
                     Circle()
@@ -98,7 +99,7 @@ struct MvpToggleSwitch: View {
                     // Active Checkmark
                     Image(systemName: "checkmark")
                         .font(.system(size: 38, weight: .bold))
-                        .foregroundColor(MvpTheme.activeColor)
+                        .foregroundStyle(MvpTheme.activeColor)
                         .opacity(isOn ? 1 : 0)
                         .scaleEffect(isOn ? 1 : 0.5)
 
@@ -110,21 +111,21 @@ struct MvpToggleSwitch: View {
                         .scaleEffect(isOn ? 0.5 : 1)
                 }
                 .offset(x: isOn ? 12 : -12)
-                
+
                 if !isOn { Spacer() }
             }
             .frame(width: 130 + 24) // accommodate the oversized thumb
         }
         .padding(.vertical, 24)
+        .sensoryFeedback(.impact, trigger: isOn)
         .onTapGesture {
             MvpView.log.info("Toggle switch tapped (current isOn: \(isOn, privacy: .public))")
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+            withAnimation(.spring(duration: 0.4, bounce: 0.3)) {
                 action()
             }
         }
     }
 }
-
 
 @MainActor
 struct MvpStatusHero: View {
@@ -163,12 +164,12 @@ struct MvpStatusHero: View {
 
             Text(statusTitle)
                 .font(.system(size: 22, weight: .bold))
-                .foregroundColor(MvpTheme.textPrimary)
+                .foregroundStyle(MvpTheme.textPrimary)
                 .animation(.easeInOut(duration: 0.2), value: appModel.vpnManager.stage)
 
             Text(statusSubtitle)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(MvpTheme.textSecondary)
+                .foregroundStyle(MvpTheme.textSecondary)
                 .animation(.easeInOut(duration: 0.2), value: appModel.vpnManager.stage)
         }
     }
@@ -211,7 +212,7 @@ struct MvpQuickInfoCards: View {
     private func buildInfoItem(iconName: String, title: String, value: String, isActive: Bool) -> some View {
         let bgFill = isActive ? MvpTheme.activeColor.opacity(0.12) : MvpTheme.inactiveBadgeBg.opacity(0.6)
         let iconColor = isActive ? MvpTheme.activeColor : MvpTheme.textSecondary
-        
+
         return HStack(alignment: .center, spacing: 12) {
             ZStack {
                 RoundedRectangle(cornerRadius: 10)
@@ -220,17 +221,17 @@ struct MvpQuickInfoCards: View {
 
                 Image(systemName: iconName)
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(iconColor)
+                    .foregroundStyle(iconColor)
             }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(MvpTheme.textSecondary)
+                    .foregroundStyle(MvpTheme.textSecondary)
 
                 Text(value)
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(MvpTheme.textPrimary)
+                    .foregroundStyle(MvpTheme.textPrimary)
                     .lineLimit(1)
             }
 
@@ -239,7 +240,7 @@ struct MvpQuickInfoCards: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
         .background(MvpTheme.cardBg)
-        .cornerRadius(16)
+        .clipShape(.rect(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
                 .stroke(MvpTheme.borderColor, lineWidth: 1)
@@ -256,7 +257,6 @@ struct MvpProfileCard: View {
     @State private var urlInput: String = ""
     var isInputFocused: FocusState<Bool>.Binding
     @State private var versionStr: String = "v0"
-    @AppStorage("ruleProvidersVersionSuffix", store: AppGroup.defaults) private var ruleProvidersSuffix: String = ""
 
     private var hasProfile: Bool {
         activeProfile != nil && !mvpManager.showInputArea
@@ -266,7 +266,7 @@ struct MvpProfileCard: View {
         let name = activeProfile?.name ?? ""
         return name.isEmpty ? "Block Ad" : name
     }
-    
+
     private var updateDateStr: String {
         guard let date = activeProfile?.lastUpdated else { return "未知" }
         let timeStr = date.formatted(date: .omitted, time: .shortened)
@@ -278,26 +278,24 @@ struct MvpProfileCard: View {
             return date.formatted(.dateTime.month(.twoDigits).day(.twoDigits).hour().minute())
         }
     }
-    
-    private func computeVersion(from yaml: String?) async -> String {
+
+    nonisolated private static func parseRuleCount(from yaml: String?) -> String {
         guard let yaml else { return "v0" }
-        return await Task.detached {
-            var count = 0
-            var inRules = false
-            yaml.enumerateLines { line, stop in
-                let trimmed = line.trimmingCharacters(in: .whitespaces)
-                if trimmed.hasPrefix("rules:") {
-                    inRules = true
-                } else if inRules {
-                    if trimmed.hasPrefix("-") {
-                        count += 1
-                    } else if !trimmed.isEmpty && !trimmed.hasPrefix("#") {
-                        stop = true
-                    }
+        var count = 0
+        var inRules = false
+        yaml.enumerateLines { line, stop in
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            if trimmed.hasPrefix("rules:") {
+                inRules = true
+            } else if inRules {
+                if trimmed.hasPrefix("-") {
+                    count += 1
+                } else if !trimmed.isEmpty && !trimmed.hasPrefix("#") {
+                    stop = true
                 }
             }
-            return "v\(count)"
-        }.value
+        }
+        return "v\(count)"
     }
 
     var body: some View {
@@ -311,7 +309,7 @@ struct MvpProfileCard: View {
                 buildLoadedState()
                     .opacity(hasProfile ? 1 : 0)
                     .allowsHitTesting(hasProfile)
-                
+
                 buildImportState()
                     .opacity(hasProfile ? 0 : 1)
                     .allowsHitTesting(!hasProfile)
@@ -320,13 +318,13 @@ struct MvpProfileCard: View {
         }
         .padding(16)
         .background(MvpTheme.cardBg)
-        .cornerRadius(16)
+        .clipShape(.rect(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
                 .stroke(MvpTheme.borderColor, lineWidth: 1)
         )
         .task(id: activeProfile?.lastUpdated) {
-            versionStr = await computeVersion(from: activeProfile?.yamlContent)
+            versionStr = Self.parseRuleCount(from: activeProfile?.yamlContent)
         }
     }
 
@@ -335,11 +333,11 @@ struct MvpProfileCard: View {
             HStack(alignment: .center, spacing: 8) {
                 Image(systemName: "slider.horizontal.3")
                     .font(.system(size: 15))
-                    .foregroundColor(MvpTheme.textPrimary)
+                    .foregroundStyle(MvpTheme.textPrimary)
 
                 Text("配置文件")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(MvpTheme.textPrimary)
+                    .foregroundStyle(MvpTheme.textPrimary)
             }
 
             Spacer()
@@ -347,8 +345,8 @@ struct MvpProfileCard: View {
             if hasProfile {
                 Button(action: {
                     MvpView.log.info("Reset profile button tapped, expanding input area")
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                        mvpManager.showInputArea = true 
+                    withAnimation(.snappy) {
+                        mvpManager.showInputArea = true
                     }
                 }, label: {
                     HStack(spacing: 4) {
@@ -357,15 +355,15 @@ struct MvpProfileCard: View {
                         Text("重置")
                             .font(.system(size: 13, weight: .semibold))
                     }
-                    .foregroundColor(MvpTheme.dangerText)
+                    .foregroundStyle(MvpTheme.dangerText)
                     .padding(8)
                     .background(MvpTheme.dangerColor.opacity(0.05))
-                    .cornerRadius(8)
+                    .clipShape(.rect(cornerRadius: 8))
                 })
             } else if activeProfile != nil {
                 Button(action: {
                     MvpView.log.info("Collapse profile input button tapped")
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                    withAnimation(.snappy) {
                         mvpManager.showInputArea = false
                     }
                 }, label: {
@@ -375,10 +373,10 @@ struct MvpProfileCard: View {
                         Text("收起")
                             .font(.system(size: 13, weight: .semibold))
                     }
-                    .foregroundColor(MvpTheme.textSecondary)
+                    .foregroundStyle(MvpTheme.textSecondary)
                     .padding(8)
                     .background(MvpTheme.inactiveBadgeBg.opacity(0.4))
-                    .cornerRadius(8)
+                    .clipShape(.rect(cornerRadius: 8))
                 })
             }
         }
@@ -390,10 +388,10 @@ struct MvpProfileCard: View {
                 TextField(
                     "粘贴配置文件链接",
                     text: $urlInput,
-                    prompt: Text("粘贴配置文件链接").foregroundColor(MvpTheme.textSecondary)
+                    prompt: Text("粘贴配置文件链接").foregroundStyle(MvpTheme.textSecondary)
                 )
                 .font(.system(size: 14))
-                .foregroundColor(MvpTheme.textPrimary)
+                .foregroundStyle(MvpTheme.textPrimary)
                 .tint(MvpTheme.activeColor)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
@@ -403,7 +401,7 @@ struct MvpProfileCard: View {
                 .padding(.vertical, 12)
                 .focused(isInputFocused)
                 .background(MvpTheme.inputBg)
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(MvpTheme.borderColor, lineWidth: 1)
@@ -417,7 +415,7 @@ struct MvpProfileCard: View {
                 }, label: {
                     Image(systemName: "doc.on.clipboard")
                         .font(.system(size: 15))
-                        .foregroundColor(MvpTheme.textSecondary)
+                        .foregroundStyle(MvpTheme.textSecondary)
                         .frame(width: 32, height: 32)
                         .contentShape(Rectangle())
                 })
@@ -433,7 +431,8 @@ struct MvpProfileCard: View {
                 HStack(alignment: .center, spacing: 8) {
                     if mvpManager.isImporting {
                         ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .progressViewStyle(.circular)
+                            .tint(.white)
                             .scaleEffect(0.8)
                     } else {
                         Image(systemName: "square.and.arrow.down.fill")
@@ -442,11 +441,11 @@ struct MvpProfileCard: View {
                             .font(.system(size: 15, weight: .bold))
                     }
                 }
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
                 .background(MvpTheme.activeColor)
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
                 .shadow(color: MvpTheme.activeColor.opacity(0.2), radius: 12, x: 0, y: 4)
             })
             .disabled(mvpManager.isImporting)
@@ -458,15 +457,15 @@ struct MvpProfileCard: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text(activeProfileTitle)
                     .font(.system(size: 17, weight: .bold))
-                    .foregroundColor(MvpTheme.textPrimary)
+                    .foregroundStyle(MvpTheme.textPrimary)
                     .lineLimit(1)
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text("更新于：\(updateDateStr)")
-                    Text("版本：\(versionStr)\(ruleProvidersSuffix)")
+                    Text("版本：\(versionStr)\(mvpManager.ruleProvidersVersionSuffix)")
                 }
                 .font(.system(size: 13, weight: .regular))
-                .foregroundColor(MvpTheme.textSecondary)
+                .foregroundStyle(MvpTheme.textSecondary)
             }
 
             Spacer()
@@ -482,7 +481,8 @@ struct MvpProfileCard: View {
                 HStack(alignment: .center, spacing: 6) {
                     if mvpManager.isUpdating {
                         ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .progressViewStyle(.circular)
+                            .tint(.white)
                             .scaleEffect(0.7)
                     } else {
                         Image(systemName: "arrow.triangle.2.circlepath")
@@ -491,11 +491,11 @@ struct MvpProfileCard: View {
                     Text("更新")
                         .font(.system(size: 14, weight: .bold))
                 }
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 10)
                 .background(MvpTheme.activeColor)
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
                 .shadow(color: MvpTheme.activeColor.opacity(0.2), radius: 12, x: 0, y: 4)
             })
         }
@@ -520,7 +520,7 @@ struct MvpView: View {
     @FocusState private var isInputFocused: Bool
 
     private var actualProfile: Profile? {
-        return profiles.first(where: \.isSelected) ?? profiles.first
+        profiles.first(where: \.isSelected) ?? profiles.first
     }
 
     var body: some View {
@@ -608,21 +608,21 @@ struct MvpView: View {
             Spacer()
             HStack(spacing: 8) {
                 Image(systemName: toastIconName(for: mvpManager.toastType))
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .font(.system(size: 14, weight: .semibold))
                 Text(msg)
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
             .background(MvpTheme.toastBg)
-            .cornerRadius(12)
+            .clipShape(.rect(cornerRadius: 12))
             .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
             .padding(.bottom, 24)
             .transition(.move(edge: .bottom).combined(with: .opacity))
         }
-        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: msg)
+        .animation(.snappy, value: msg)
     }
 
     private func toastIconName(for type: MvpToastType) -> String {
