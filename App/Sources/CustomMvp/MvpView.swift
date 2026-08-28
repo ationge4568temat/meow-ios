@@ -256,7 +256,7 @@ struct MvpProfileCard: View {
     @State private var urlInput: String = ""
     var isInputFocused: FocusState<Bool>.Binding
     @State private var versionStr: String = "v0"
-    @AppStorage("ruleProvidersVersionSuffix") private var ruleProvidersSuffix: String = ""
+    @AppStorage("ruleProvidersVersionSuffix", store: AppGroup.defaults) private var ruleProvidersSuffix: String = ""
 
     private var hasProfile: Bool {
         activeProfile != nil && !mvpManager.showInputArea
