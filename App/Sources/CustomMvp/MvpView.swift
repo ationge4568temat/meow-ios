@@ -662,7 +662,6 @@ struct MvpView: View {
     }
 
     private func exportLogs() async {
-        Self.log.info("Export logs initiated from UI...")
         exportingLogs = true
         defer { exportingLogs = false }
         let text = await MvpLogExporter.collectCombinedLogs()
