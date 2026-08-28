@@ -652,7 +652,7 @@ struct MvpView: View {
         Self.log.info("Export logs initiated from UI...")
         exportingLogs = true
         defer { exportingLogs = false }
-        let text = await Task.detached { MvpLogExporter.collectCombinedLogs() }.value
+        let text = await MvpLogExporter.collectCombinedLogs()
         logExportDocument = MvpLogExportDocument(text: text)
         showingLogExporter = true
         Self.log.info("Log export document presented.")
