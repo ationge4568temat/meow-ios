@@ -267,18 +267,15 @@ struct MvpProfileCard: View {
     }
     
     private var updateDateStr: String {
-        if let date = activeProfile?.lastUpdated {
-            let df = DateFormatter()
-            if Calendar.current.isDateInToday(date) {
-                df.dateFormat = "'今天' HH:mm"
-            } else if Calendar.current.isDateInYesterday(date) {
-                df.dateFormat = "'昨天' HH:mm"
-            } else {
-                df.dateFormat = "MM-dd HH:mm"
-            }
-            return df.string(from: date)
+        guard let date = activeProfile?.lastUpdated else { return "未知" }
+        let timeStr = date.formatted(date: .omitted, time: .shortened)
+        if Calendar.current.isDateInToday(date) {
+            return "今天 \(timeStr)"
+        } else if Calendar.current.isDateInYesterday(date) {
+            return "昨天 \(timeStr)"
+        } else {
+            return date.formatted(.dateTime.month(.twoDigits).day(.twoDigits).hour().minute())
         }
-        return "未知"
     }
     
     private func computeVersion(from yaml: String?) async -> String {
@@ -565,8 +562,9 @@ struct MvpView: View {
                         .frame(maxWidth: .infinity, alignment: .center)
                         .onChange(of: isInputFocused) { _, isFocused in
                             if isFocused {
-                                // Delay slightly to let the keyboard safe area update
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                                Task { @MainActor in
+                                    // Delay slightly to let the keyboard safe area update
+                                    try? await Task.sleep(for: .milliseconds(200))
                                     withAnimation(.easeOut(duration: 0.3)) {
                                         scrollProxy.scrollTo("ProfileCard", anchor: .bottom)
                                     }
@@ -628,9 +626,15 @@ struct MvpView: View {
     // MARK: - Log Export
 
     private var logTimestamp: String {
-        let df = DateFormatter()
-        df.dateFormat = "yyyyMMdd-HHmmss"
-        return df.string(from: Date())
+        Date.now.formatted(
+            .dateTime
+                .year()
+                .month(.twoDigits)
+                .day(.twoDigits)
+                .hour(.twoDigits(amPM: .omitted))
+                .minute(.twoDigits)
+                .second(.twoDigits)
+        ).filter { $0.isNumber }
     }
 
     private func exportLogs() async {
