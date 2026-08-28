@@ -509,6 +509,7 @@ struct MvpView: View {
     static let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "meow-ios", category: "mvp-ui")
 
     @Environment(AppModel.self) private var appModel
+    @Environment(\.scenePhase) private var scenePhase
     @Query private var profiles: [Profile]
 
     private let mvpManager = MvpManager.shared
@@ -582,6 +583,16 @@ struct MvpView: View {
             }
         }
         .preferredColorScheme(.light)
+        .task(id: actualProfile?.id) {
+            await mvpManager.checkAutoUpdate(appModel: appModel, activeProfile: actualProfile)
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
+                Task {
+                    await mvpManager.checkAutoUpdate(appModel: appModel, activeProfile: actualProfile)
+                }
+            }
+        }
         .onChange(of: appModel.vpnManager.stage) { _, stage in
             if stage == .connected {
                 Task { await mvpManager.fetchRuleProviderCounts() }
