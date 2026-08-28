@@ -29,7 +29,6 @@ enum MvpLogExporter: Sendable {
     private static let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "meow-ios", category: "mvp-log-exporter")
 
     static func collectCombinedLogs() async -> String {
-        log.info("Starting combined log collection...")
         return await Task.detached {
             let osLogs = collectOSLogs()
             let tunnelLogs = collectTunnelFileLog()
