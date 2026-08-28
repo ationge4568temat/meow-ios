@@ -29,10 +29,11 @@ final class MvpManager {
     var isUpdating: Bool = false
     var isConnectionToggling: Bool = false
     
-    var ruleProvidersVersionSuffix: String = AppGroup.defaults.string(forKey: "ruleProvidersVersionSuffix") ?? "" {
-        didSet {
-            AppGroup.defaults.set(ruleProvidersVersionSuffix, forKey: "ruleProvidersVersionSuffix")
-        }
+    var ruleProvidersVersionSuffix: String = AppGroup.defaults.string(forKey: "ruleProvidersVersionSuffix") ?? ""
+
+    func updateRuleProvidersSuffix(_ suffix: String) {
+        ruleProvidersVersionSuffix = suffix
+        AppGroup.defaults.set(suffix, forKey: "ruleProvidersVersionSuffix")
     }
 
     var toastMessage: String?
@@ -308,10 +309,7 @@ final class MvpManager {
             
             let newSuffix = suffix.isEmpty ? "" : ".\(suffix)"
             Self.log.info("fetchRuleProviderCounts success: \(newSuffix, privacy: .public)")
-            
-            Task { @MainActor in
-                self.ruleProvidersVersionSuffix = newSuffix
-            }
+            updateRuleProvidersSuffix(newSuffix)
         } else {
             Self.log.warning("fetchRuleProviderCounts failed to fetch from API.")
         }
