@@ -26,13 +26,19 @@ struct MvpLogExportDocument: FileDocument {
 }
 
 enum MvpLogExporter {
+    private static let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "meow-ios", category: "mvp-log-exporter")
+
     static func collectCombinedLogs() -> String {
-        """
+        log.info("Starting combined log collection...")
+        let osLogs = collectOSLogs()
+        let tunnelLogs = collectTunnelFileLog()
+        log.info("Combined log collection completed (oslog length: \(osLogs.count, privacy: .public), tunnel log length: \(tunnelLogs.count, privacy: .public))")
+        return """
         ===== App process — OSLog, last hour =====
-        \(collectOSLogs())
+        \(osLogs)
 
         ===== Packet Tunnel + engine — \(AppGroup.tunnelLogURL.lastPathComponent) =====
-        \(collectTunnelFileLog())
+        \(tunnelLogs)
         """
     }
 
@@ -58,6 +64,7 @@ enum MvpLogExporter {
         data.append(activeData)
 
         if data.isEmpty {
+            log.warning("No packet-tunnel log file found at \(AppGroup.tunnelLogURL.path, privacy: .public)")
             return """
             No packet-tunnel log file at \(AppGroup.tunnelLogURL.path).
             Connect the tunnel at least once — the engine writes this file while running.
@@ -90,6 +97,7 @@ enum MvpLogExporter {
                 lines.append("[\(ts)] [\(lvl)] [\(log.subsystem)/\(log.category)] \(log.composedMessage)")
             }
         } catch {
+            log.error("Failed to read OSLogStore: \(error.localizedDescription, privacy: .public)")
             lines.append("Failed to read OSLogStore: \(error.localizedDescription)")
         }
         if lines.isEmpty {
