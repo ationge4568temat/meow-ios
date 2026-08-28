@@ -1,9 +1,11 @@
 import Foundation
 import CryptoKit
+import os
 
 /// 提供 MVP 配置文件加密/解密的支持
 public enum MvpCrypto {
-    
+    private static let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "meow-ios", category: "mvp-crypto")
+
     /// AES-256 共享密钥 (32 bytes)
     /// 提示：后端需使用相同 Key 进行 AES-GCM 加密。
     /// 使用硬编码字符串的 SHA256 哈希值，可以根据需要随时替换为其他的 32 字节 Key。
@@ -32,7 +34,7 @@ public enum MvpCrypto {
         } catch {
             // 解密失败（可能是格式不匹配、Key错误，或原本就不是加密数据）
             // 为保持简单和不中断流程，原样返回 data，让后续的 YAML 解析器自行判断并抛出错误
-            print("[MvpCrypto] 尝试解密失败或非预期的密文格式: \(error)")
+            log.warning("Failed to decrypt data with AES-GCM: \(error.localizedDescription, privacy: .public). Falling back to raw data.")
             return data
         }
     }
