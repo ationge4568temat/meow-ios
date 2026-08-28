@@ -5,7 +5,7 @@ import OSLog
 import SwiftUI
 import UniformTypeIdentifiers
 
-struct MvpLogExportDocument: FileDocument {
+struct MvpLogExportDocument: FileDocument, Sendable {
     static var readableContentTypes: [UTType] {
         [.plainText]
     }
@@ -25,21 +25,23 @@ struct MvpLogExportDocument: FileDocument {
     }
 }
 
-enum MvpLogExporter {
+enum MvpLogExporter: Sendable {
     private static let log = Logger(subsystem: Bundle.main.bundleIdentifier ?? "meow-ios", category: "mvp-log-exporter")
 
-    static func collectCombinedLogs() -> String {
+    static func collectCombinedLogs() async -> String {
         log.info("Starting combined log collection...")
-        let osLogs = collectOSLogs()
-        let tunnelLogs = collectTunnelFileLog()
-        log.info("Combined log collection completed (oslog length: \(osLogs.count, privacy: .public), tunnel log length: \(tunnelLogs.count, privacy: .public))")
-        return """
-        ===== App process — OSLog, last hour =====
-        \(osLogs)
+        return await Task.detached {
+            let osLogs = collectOSLogs()
+            let tunnelLogs = collectTunnelFileLog()
+            log.info("Combined log collection completed (oslog length: \(osLogs.count, privacy: .public), tunnel log length: \(tunnelLogs.count, privacy: .public))")
+            return """
+            ===== App process — OSLog, last hour =====
+            \(osLogs)
 
-        ===== Packet Tunnel + engine — \(AppGroup.tunnelLogURL.lastPathComponent) =====
-        \(tunnelLogs)
-        """
+            ===== Packet Tunnel + engine — \(AppGroup.tunnelLogURL.lastPathComponent) =====
+            \(tunnelLogs)
+            """
+        }.value
     }
 
     private static func collectTunnelFileLog() -> String {
