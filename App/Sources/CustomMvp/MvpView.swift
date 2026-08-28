@@ -584,10 +584,12 @@ struct MvpView: View {
         }
         .preferredColorScheme(.light)
         .task(id: actualProfile?.id) {
+            MvpView.log.info("MvpView task loaded with profile: \(actualProfile?.name ?? "nil", privacy: .public), checking auto-update...")
             await mvpManager.checkAutoUpdate(appModel: appModel, activeProfile: actualProfile)
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
+                MvpView.log.info("ScenePhase became active, checking auto-update...")
                 Task {
                     await mvpManager.checkAutoUpdate(appModel: appModel, activeProfile: actualProfile)
                 }
