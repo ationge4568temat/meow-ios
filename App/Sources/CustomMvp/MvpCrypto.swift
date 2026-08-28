@@ -6,7 +6,7 @@ public enum MvpCrypto {
     
     /// AES-256 共享密钥 (32 bytes)
     /// 提示：后端需使用相同 Key 进行 AES-GCM 加密。
-    /// 这里使用硬编码字符串的 SHA256 哈希值作为演示，你可以根据需要随时替换为其他的 32 字节 Key。
+    /// 使用硬编码字符串的 SHA256 哈希值，可以根据需要随时替换为其他的 32 字节 Key。
     private static var symmetricKey: SymmetricKey {
         let keyData = SHA256.hash(data: "FkAdMvpSecretKey".data(using: .utf8)!)
         return SymmetricKey(data: keyData)
