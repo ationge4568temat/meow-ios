@@ -237,8 +237,7 @@ struct MvpQuickInfoCards: View {
         .background(MvpTheme.cardBg)
         .clipShape(.rect(cornerRadius: 16))
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(MvpTheme.borderColor, lineWidth: 1)
+            RoundedRectangle(cornerRadius: 16).stroke(MvpTheme.borderColor, lineWidth: 1)
         )
     }
 }
@@ -315,8 +314,7 @@ struct MvpProfileCard: View {
         .background(MvpTheme.cardBg)
         .clipShape(.rect(cornerRadius: 16))
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(MvpTheme.borderColor, lineWidth: 1)
+            RoundedRectangle(cornerRadius: 16).stroke(MvpTheme.borderColor, lineWidth: 1)
         )
         .task(id: activeProfile?.lastUpdated) {
             versionStr = Self.parseRuleCount(from: activeProfile?.yamlContent)
@@ -439,9 +437,7 @@ struct MvpProfileCard: View {
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
-                .background(MvpTheme.activeColor)
-                .clipShape(.rect(cornerRadius: 12))
-                .shadow(color: MvpTheme.activeColor.opacity(0.2), radius: 12, x: 0, y: 4)
+                .applyMvpPrimaryButtonStyle()
             })
             .disabled(mvpManager.isImporting)
         }
@@ -489,9 +485,7 @@ struct MvpProfileCard: View {
                 .foregroundStyle(.white)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 10)
-                .background(MvpTheme.activeColor)
-                .clipShape(.rect(cornerRadius: 12))
-                .shadow(color: MvpTheme.activeColor.opacity(0.2), radius: 12, x: 0, y: 4)
+                .applyMvpPrimaryButtonStyle()
             })
         }
     }
@@ -663,5 +657,22 @@ struct MvpView: View {
         logExportDocument = MvpLogExportDocument(text: text)
         showingLogExporter = true
         Self.log.info("Log export document presented.")
+    }
+}
+
+// MARK: - Modifiers
+
+private struct MvpPrimaryButtonModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .background(MvpTheme.activeColor)
+            .clipShape(.rect(cornerRadius: 12))
+            .shadow(color: MvpTheme.activeColor.opacity(0.2), radius: 12, x: 0, y: 4)
+    }
+}
+
+fileprivate extension View {
+    func applyMvpPrimaryButtonStyle() -> some View {
+        self.modifier(MvpPrimaryButtonModifier())
     }
 }
