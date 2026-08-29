@@ -82,8 +82,8 @@ struct MvpToggleSwitch: View {
             // Track
             Capsule()
                 .fill(isOn ? MvpTheme.activeColor : MvpTheme.inactiveGray)
-                .animation(.easeInOut(duration: 0.35), value: isOn)
                 .frame(width: 130, height: 56)
+                .animation(.easeInOut(duration: 0.35), value: isOn)
 
             // Thumb
             ZStack {
@@ -95,23 +95,26 @@ struct MvpToggleSwitch: View {
 
                 // Active Checkmark
                 Image(systemName: "checkmark")
-                    .font(.system(size: 38, weight: .bold))
+                    .font(.system(size: 34, weight: .bold))
                     .foregroundStyle(MvpTheme.activeColor)
-                    .scaleEffect(isOn ? 1 : 0.5)
-                    .opacity(isOn ? 1 : 0)
+                    .frame(width: 38, height: 38)
+                    .scaleEffect(isOn ? 1.0 : 0.5)
+                    .opacity(isOn ? 1.0 : 0.0)
                     .animation(.linear(duration: 0.25), value: isOn)
 
                 // Inactive Circle
                 Circle()
-                    .stroke(MvpTheme.inactiveGray, lineWidth: 4)
+                    .strokeBorder(MvpTheme.inactiveGray, lineWidth: 4)
                     .frame(width: 24, height: 24)
-                    .scaleEffect(isOn ? 0.5 : 1)
-                    .opacity(isOn ? 0 : 1)
+                    .scaleEffect(isOn ? 0.5 : 1.0)
+                    .opacity(isOn ? 0.0 : 1.0)
                     .animation(.linear(duration: 0.25), value: isOn)
             }
-            .frame(width: 154, alignment: isOn ? .trailing : .leading)
+            .frame(width: 86, height: 86)
+            .offset(x: isOn ? 34 : -34)
             .animation(.spring(duration: 0.35, bounce: 0.15), value: isOn)
         }
+        .frame(width: 154, height: 86)
         .padding(.vertical, 24)
         .sensoryFeedback(.impact, trigger: isOn)
         .onTapGesture {
