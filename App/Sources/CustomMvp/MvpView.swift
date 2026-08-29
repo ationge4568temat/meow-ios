@@ -102,6 +102,7 @@ struct MvpToggleSwitch: View {
                         .foregroundStyle(MvpTheme.activeColor)
                         .opacity(isOn ? 1 : 0)
                         .scaleEffect(isOn ? 1 : 0.5)
+                        .animation(.easeInOut(duration: 0.25), value: isOn)
 
                     // Inactive Circle
                     Circle()
@@ -109,6 +110,7 @@ struct MvpToggleSwitch: View {
                         .frame(width: 24, height: 24)
                         .opacity(isOn ? 0 : 1)
                         .scaleEffect(isOn ? 0.5 : 1)
+                        .animation(.easeInOut(duration: 0.25), value: isOn)
                 }
                 .offset(x: isOn ? 12 : -12)
 
@@ -116,7 +118,7 @@ struct MvpToggleSwitch: View {
             }
             .frame(width: 130 + 24) // accommodate the oversized thumb
         }
-        .animation(.spring(duration: 0.4, bounce: 0.3), value: isOn)
+        .animation(.spring(duration: 0.35, bounce: 0.3), value: isOn)
         .padding(.vertical, 24)
         .sensoryFeedback(.impact, trigger: isOn)
         .onTapGesture {
