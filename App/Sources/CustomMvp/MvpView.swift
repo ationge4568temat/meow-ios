@@ -33,17 +33,17 @@ struct MvpHeaderBar: View {
                     onExportLogs()
                 }, label: {
                     ZStack {
-                        if exportingLogs {
-                            ProgressView()
-                                .progressViewStyle(.circular)
-                                .scaleEffect(0.8)
-                        } else {
-                            Image(systemName: "doc.plaintext")
-                                .font(.system(size: 14))
-                                .foregroundStyle(MvpTheme.textSecondary)
-                                .opacity(0.8)
-                        }
+                        Image(systemName: "doc.plaintext")
+                            .font(.system(size: 14))
+                            .foregroundStyle(MvpTheme.textSecondary)
+                            .opacity(exportingLogs ? 0 : 0.8)
+                            
+                        ProgressView()
+                            .progressViewStyle(.circular)
+                            .scaleEffect(0.7) // 匹配 14pt Icon (20 * 0.7 = 14)
+                            .opacity(exportingLogs ? 1 : 0)
                     }
+                    .animation(.easeInOut(duration: 0.2), value: exportingLogs)
                     .padding(.horizontal, 4)
                     .padding(.vertical, 8)
                 })
@@ -422,17 +422,20 @@ struct MvpProfileCard: View {
                 }
             }, label: {
                 HStack(alignment: .center, spacing: 8) {
-                    if mvpManager.isImporting {
+                    ZStack {
+                        Image(systemName: "square.and.arrow.down.fill")
+                            .font(.system(size: 15))
+                            .opacity(mvpManager.isImporting ? 0 : 1)
+                            
                         ProgressView()
                             .progressViewStyle(.circular)
                             .tint(.white)
-                            .scaleEffect(0.8)
-                    } else {
-                        Image(systemName: "square.and.arrow.down.fill")
-                            .font(.system(size: 15))
-                        Text("下载并导入")
-                            .font(.system(size: 15, weight: .bold))
+                            .scaleEffect(0.75) // 匹配 15pt Icon (20 * 0.75 = 15)
+                            .opacity(mvpManager.isImporting ? 1 : 0)
                     }
+                    .animation(.easeInOut(duration: 0.2), value: mvpManager.isImporting)
+                    Text("下载并导入")
+                        .font(.system(size: 15, weight: .bold))
                 }
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
@@ -470,15 +473,18 @@ struct MvpProfileCard: View {
                 }
             }, label: {
                 HStack(alignment: .center, spacing: 6) {
-                    if mvpManager.isUpdating {
+                    ZStack {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .font(.system(size: 12, weight: .bold))
+                            .opacity(mvpManager.isUpdating ? 0 : 1)
+                            
                         ProgressView()
                             .progressViewStyle(.circular)
                             .tint(.white)
-                            .scaleEffect(0.7)
-                    } else {
-                        Image(systemName: "arrow.triangle.2.circlepath")
-                            .font(.system(size: 12, weight: .bold))
+                            .scaleEffect(0.65) // 折中尺寸 (20 * 0.65 = 13) 确保视觉清晰
+                            .opacity(mvpManager.isUpdating ? 1 : 0)
                     }
+                    .animation(.easeInOut(duration: 0.2), value: mvpManager.isUpdating)
                     Text("更新")
                         .font(.system(size: 14, weight: .bold))
                 }
