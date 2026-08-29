@@ -83,7 +83,7 @@ struct MvpToggleSwitch: View {
             Capsule()
                 .fill(isOn ? MvpTheme.activeColor : MvpTheme.inactiveGray)
                 .frame(width: 130, height: 56)
-                .animation(.easeInOut(duration: 0.35), value: isOn)
+                .animation(.easeInOut(duration: 0.25), value: isOn)
 
             // Thumb
             ZStack {
@@ -98,21 +98,21 @@ struct MvpToggleSwitch: View {
                     .font(.system(size: 34, weight: .bold))
                     .foregroundStyle(MvpTheme.activeColor)
                     .frame(width: 38, height: 38)
-                    .scaleEffect(isOn ? 1.0 : 0.5)
+                    .scaleEffect(isOn ? 1.0 : 0.4)
                     .opacity(isOn ? 1.0 : 0.0)
-                    .animation(.linear(duration: 0.25), value: isOn)
+                    .animation(.easeOut(duration: 0.18), value: isOn)
 
                 // Inactive Circle
                 Circle()
                     .strokeBorder(MvpTheme.inactiveGray, lineWidth: 4)
                     .frame(width: 24, height: 24)
-                    .scaleEffect(isOn ? 0.5 : 1.0)
+                    .scaleEffect(isOn ? 0.4 : 1.0)
                     .opacity(isOn ? 0.0 : 1.0)
-                    .animation(.linear(duration: 0.25), value: isOn)
+                    .animation(.easeOut(duration: 0.18), value: isOn)
             }
             .frame(width: 86, height: 86)
             .offset(x: isOn ? 34 : -34)
-            .animation(.spring(duration: 0.35, bounce: 0.15), value: isOn)
+            .animation(.snappy(duration: 0.28, extraBounce: 0.12), value: isOn)
         }
         .frame(width: 154, height: 86)
         .padding(.vertical, 24)
