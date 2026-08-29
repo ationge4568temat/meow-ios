@@ -116,13 +116,12 @@ struct MvpToggleSwitch: View {
             }
             .frame(width: 130 + 24) // accommodate the oversized thumb
         }
+        .animation(.spring(duration: 0.4, bounce: 0.3), value: isOn)
         .padding(.vertical, 24)
         .sensoryFeedback(.impact, trigger: isOn)
         .onTapGesture {
             MvpView.log.info("Toggle switch tapped (current isOn: \(isOn, privacy: .public))")
-            withAnimation(.spring(duration: 0.4, bounce: 0.3)) {
-                action()
-            }
+            action()
         }
     }
 }
