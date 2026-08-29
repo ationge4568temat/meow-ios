@@ -100,7 +100,7 @@ struct MvpToggleSwitch: View {
                     .frame(width: 38, height: 38)
                     .scaleEffect(isOn ? 1.0 : 0.4)
                     .opacity(isOn ? 1.0 : 0.0)
-                    .animation(.easeOut(duration: 0.18), value: isOn)
+                    .animation(.easeOut(duration: 0.12), value: isOn)
 
                 // Inactive Circle
                 Circle()
@@ -108,11 +108,11 @@ struct MvpToggleSwitch: View {
                     .frame(width: 24, height: 24)
                     .scaleEffect(isOn ? 0.4 : 1.0)
                     .opacity(isOn ? 0.0 : 1.0)
-                    .animation(.easeOut(duration: 0.18), value: isOn)
+                    .animation(.easeOut(duration: 0.12), value: isOn)
             }
             .frame(width: 86, height: 86)
             .offset(x: isOn ? 34 : -34)
-            .animation(.spring(duration: 0.24, bounce: 0.0), value: isOn)
+            .animation(.spring(duration: 0.22, bounce: 0.06), value: isOn)
         }
         .frame(width: 154, height: 86)
         .padding(.vertical, 24)
