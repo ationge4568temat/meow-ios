@@ -82,43 +82,36 @@ struct MvpToggleSwitch: View {
             // Track
             Capsule()
                 .fill(isOn ? MvpTheme.activeColor : MvpTheme.inactiveGray)
+                .animation(.easeInOut(duration: 0.35), value: isOn)
                 .frame(width: 130, height: 56)
 
-            // Thumb container
-            HStack {
-                if isOn { Spacer() }
+            // Thumb
+            ZStack {
+                Circle()
+                    .fill(Color.white)
+                    .frame(width: 86, height: 86)
+                    .shadow(color: Color.black.opacity(0.12), radius: 12, x: 0, y: 4)
+                    .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 1)
 
-                // Thumb
-                ZStack {
-                    Circle()
-                        .fill(Color.white)
-                        .frame(width: 86, height: 86)
-                        .shadow(color: Color.black.opacity(0.12), radius: 12, x: 0, y: 4)
-                        .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 1)
+                // Active Checkmark
+                Image(systemName: "checkmark")
+                    .font(.system(size: 38, weight: .bold))
+                    .foregroundStyle(MvpTheme.activeColor)
+                    .scaleEffect(isOn ? 1 : 0.5)
+                    .opacity(isOn ? 1 : 0)
+                    .animation(.linear(duration: 0.25), value: isOn)
 
-                    // Active Checkmark
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 38, weight: .bold))
-                        .foregroundStyle(MvpTheme.activeColor)
-                        .opacity(isOn ? 1 : 0)
-                        .scaleEffect(isOn ? 1 : 0.5)
-                        .animation(.easeInOut(duration: 0.25), value: isOn)
-
-                    // Inactive Circle
-                    Circle()
-                        .stroke(MvpTheme.inactiveGray, lineWidth: 4)
-                        .frame(width: 24, height: 24)
-                        .opacity(isOn ? 0 : 1)
-                        .scaleEffect(isOn ? 0.5 : 1)
-                        .animation(.easeInOut(duration: 0.25), value: isOn)
-                }
-                .offset(x: isOn ? 12 : -12)
-
-                if !isOn { Spacer() }
+                // Inactive Circle
+                Circle()
+                    .stroke(MvpTheme.inactiveGray, lineWidth: 4)
+                    .frame(width: 24, height: 24)
+                    .scaleEffect(isOn ? 0.5 : 1)
+                    .opacity(isOn ? 0 : 1)
+                    .animation(.linear(duration: 0.25), value: isOn)
             }
-            .frame(width: 130 + 24) // accommodate the oversized thumb
+            .frame(width: 154, alignment: isOn ? .trailing : .leading)
+            .animation(.spring(duration: 0.35, bounce: 0.15), value: isOn)
         }
-        .animation(.spring(duration: 0.35, bounce: 0.3), value: isOn)
         .padding(.vertical, 24)
         .sensoryFeedback(.impact, trigger: isOn)
         .onTapGesture {
