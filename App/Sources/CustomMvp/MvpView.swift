@@ -83,7 +83,7 @@ struct MvpToggleSwitch: View {
             Capsule()
                 .fill(isOn ? MvpTheme.activeColor : MvpTheme.inactiveGray)
                 .frame(width: 130, height: 56)
-                .animation(.easeInOut(duration: 0.25), value: isOn)
+                .animation(.easeInOut(duration: 0.22), value: isOn)
 
             // Thumb
             ZStack {
@@ -112,7 +112,7 @@ struct MvpToggleSwitch: View {
             }
             .frame(width: 86, height: 86)
             .offset(x: isOn ? 34 : -34)
-            .animation(.snappy(duration: 0.28, extraBounce: 0.12), value: isOn)
+            .animation(.spring(duration: 0.24, bounce: 0.0), value: isOn)
         }
         .frame(width: 154, height: 86)
         .padding(.vertical, 24)
