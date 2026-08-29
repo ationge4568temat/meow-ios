@@ -112,7 +112,7 @@ struct MvpToggleSwitch: View {
             }
             .frame(width: 86, height: 86)
             .offset(x: isOn ? 34 : -34)
-            .animation(.timingCurve(0.175, 0.885, 0.32, 1.275, duration: 0.35), value: isOn)
+            .animation(.spring(duration: 0.35, bounce: 0.25), value: isOn)
         }
         .frame(width: 154, height: 86)
         .padding(.vertical, 24)
