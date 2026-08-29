@@ -100,7 +100,6 @@ struct MvpToggleSwitch: View {
                     .frame(width: 38, height: 38)
                     .scaleEffect(isOn ? 1.0 : 0.5)
                     .opacity(isOn ? 1.0 : 0.0)
-                    .animation(.linear(duration: 0.25), value: isOn)
 
                 // Inactive Circle
                 Circle()
@@ -108,7 +107,6 @@ struct MvpToggleSwitch: View {
                     .frame(width: 24, height: 24)
                     .scaleEffect(isOn ? 0.5 : 1.0)
                     .opacity(isOn ? 0.0 : 1.0)
-                    .animation(.linear(duration: 0.25), value: isOn)
             }
             .frame(width: 86, height: 86)
             .offset(x: isOn ? 34 : -34)
