@@ -364,7 +364,7 @@ struct MvpProfileCard: View {
                             .font(.footnote.weight(.semibold))
                     }
                     .foregroundStyle(MvpTheme.dangerText)
-                    .padding(.horizontal, 12)
+                    .padding(.horizontal, 8)
                     .padding(.vertical, 6)
                     .background(MvpTheme.dangerColor.opacity(0.05))
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
@@ -383,7 +383,7 @@ struct MvpProfileCard: View {
                             .font(.footnote.weight(.semibold))
                     }
                     .foregroundStyle(MvpTheme.textSecondary)
-                    .padding(.horizontal, 12)
+                    .padding(.horizontal, 8)
                     .padding(.vertical, 6)
                     .background(MvpTheme.inactiveBadgeBg.opacity(0.4))
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
