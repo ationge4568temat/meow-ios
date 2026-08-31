@@ -14,6 +14,8 @@ struct MvpHeaderBar: View {
     // Tap counter for 5-tap easter egg to switch back to full meow-ios mode
     @State private var minimalTapCount: Int = 0
     @State private var lastTapTime: Date?
+    @State private var showingPasswordPrompt = false
+    @State private var passwordInput = ""
 
     var body: some View {
         ZStack(alignment: .center) {
@@ -51,6 +53,24 @@ struct MvpHeaderBar: View {
             }
         }
         .frame(height: 36)
+        .alert("输入高级模式密码", isPresented: $showingPasswordPrompt) {
+            SecureField("请输入密码", text: $passwordInput)
+            Button("取消", role: .cancel) { }
+            Button("确认") {
+                if passwordInput == "fkad666" {
+                    MvpView.log.info("Minimal header 5-tap gesture authenticated: switching to full meow-ios mode")
+                    withAnimation(.snappy) {
+                        mvpManager.isMvpMode = false
+                    }
+                    mvpManager.showToast("已切换至高级模式", type: .info)
+                } else {
+                    MvpView.log.info("Minimal header 5-tap gesture password incorrect")
+                    mvpManager.showToast("密码错误", type: .error)
+                }
+            }
+        } message: {
+            Text("需要输入密码才能进入高级模式")
+        }
     }
 
     private func handleMinimalTap() {
@@ -63,11 +83,8 @@ struct MvpHeaderBar: View {
 
         if minimalTapCount >= 5 {
             minimalTapCount = 0
-            MvpView.log.info("Minimal header 5-tap gesture triggered: switching to full meow-ios mode")
-            withAnimation(.snappy) {
-                mvpManager.isMvpMode = false
-            }
-            mvpManager.showToast("已切换至高级模式", type: .info)
+            passwordInput = ""
+            showingPasswordPrompt = true
         }
     }
 }
