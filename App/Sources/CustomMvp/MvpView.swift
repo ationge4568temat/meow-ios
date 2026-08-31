@@ -254,7 +254,7 @@ struct MvpQuickInfoCards: View {
         .padding(16)
         .background(MvpTheme.cardBg)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .shadow(color: Color.black.opacity(0.04), radius: 12, x: 0, y: 4)
+        .shadow(color: Color.black.opacity(0.02), radius: 12, x: 0, y: 3)
     }
 }
 
@@ -330,7 +330,7 @@ struct MvpProfileCard: View {
         .padding(.vertical, 14)
         .background(MvpTheme.cardBg)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .shadow(color: Color.black.opacity(0.04), radius: 12, x: 0, y: 4)
+        .shadow(color: Color.black.opacity(0.02), radius: 12, x: 0, y: 3)
         .task(id: activeProfile?.lastUpdated) {
             versionStr = Self.parseRuleCount(from: activeProfile?.yamlContent)
         }
@@ -411,7 +411,7 @@ struct MvpProfileCard: View {
                 .padding(.trailing, 40)
                 .padding(.vertical, 12)
                 .focused(isInputFocused)
-                .background(Color(uiColor: .tertiarySystemFill))
+                .background(Color(uiColor: .systemGray6))
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 
                 Button(action: {
