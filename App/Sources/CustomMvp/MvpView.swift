@@ -53,7 +53,7 @@ struct MvpHeaderBar: View {
             }
         }
         .frame(height: 36)
-        .alert("高级模式密码验证", isPresented: $showingPasswordPrompt) {
+        .alert("切换至高级模式", isPresented: $showingPasswordPrompt) {
             SecureField("请输入密码", text: $passwordInput)
             Button("取消", role: .cancel) { }
             Button("确认") {
@@ -69,7 +69,7 @@ struct MvpHeaderBar: View {
                 }
             }
         } message: {
-            Text("需要输入密码才能进入高级模式")
+            Text("此功能或导致无法联网，需密码验证")
         }
     }
 
