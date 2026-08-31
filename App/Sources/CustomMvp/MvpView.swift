@@ -21,7 +21,7 @@ struct MvpHeaderBar: View {
         ZStack(alignment: .center) {
             // Centered Title with tap gesture
             Text("Block Ad")
-                .font(.system(size: 16, weight: .semibold))
+                .font(.callout.weight(.semibold))
                 .foregroundStyle(MvpTheme.textPrimary)
                 .contentShape(Rectangle())
                 .onTapGesture {
@@ -36,7 +36,7 @@ struct MvpHeaderBar: View {
                 }, label: {
                     ZStack {
                         Image(systemName: "doc.plaintext")
-                            .font(.system(size: 14))
+                            .font(.footnote)
                             .foregroundStyle(MvpTheme.textSecondary)
                             .opacity(exportingLogs ? 0 : 0.8)
                             
@@ -112,7 +112,7 @@ struct MvpToggleSwitch: View {
 
                 // Active Checkmark
                 Image(systemName: "checkmark")
-                    .font(.system(size: 34, weight: .bold))
+                    .font(.largeTitle.weight(.bold))
                     .foregroundStyle(MvpTheme.activeColor)
                     .frame(width: 38, height: 38)
                     .scaleEffect(isOn ? 1.0 : 0.5)
@@ -175,12 +175,12 @@ struct MvpStatusHero: View {
             }
 
             Text(statusTitle)
-                .font(.system(size: 22, weight: .bold))
+                .font(.title2.weight(.bold))
                 .foregroundStyle(MvpTheme.textPrimary)
                 .animation(.easeInOut(duration: 0.2), value: appModel.vpnManager.stage)
 
             Text(statusSubtitle)
-                .font(.system(size: 14, weight: .medium))
+                .font(.footnote.weight(.medium))
                 .foregroundStyle(MvpTheme.textSecondary)
                 .animation(.easeInOut(duration: 0.2), value: appModel.vpnManager.stage)
         }
@@ -227,35 +227,34 @@ struct MvpQuickInfoCards: View {
 
         return HStack(alignment: .center, spacing: 12) {
             ZStack {
-                RoundedRectangle(cornerRadius: 10)
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .fill(bgFill)
                     .frame(width: 32, height: 32)
 
                 Image(systemName: iconName)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.subheadline.weight(.semibold))
+                    .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(iconColor)
             }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.caption.weight(.medium))
                     .foregroundStyle(MvpTheme.textSecondary)
 
                 Text(value)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.footnote.weight(.semibold))
                     .foregroundStyle(MvpTheme.textPrimary)
                     .lineLimit(1)
             }
 
-            Spacer()
+            Spacer(minLength: 0)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
         .background(MvpTheme.cardBg)
-        .clipShape(.rect(cornerRadius: 16))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16).stroke(MvpTheme.borderColor, lineWidth: 1)
-        )
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .shadow(color: Color.black.opacity(0.04), radius: 12, x: 0, y: 4)
     }
 }
 
@@ -329,10 +328,8 @@ struct MvpProfileCard: View {
         }
         .padding(16)
         .background(MvpTheme.cardBg)
-        .clipShape(.rect(cornerRadius: 16))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16).stroke(MvpTheme.borderColor, lineWidth: 1)
-        )
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .shadow(color: Color.black.opacity(0.04), radius: 12, x: 0, y: 4)
         .task(id: activeProfile?.lastUpdated) {
             versionStr = Self.parseRuleCount(from: activeProfile?.yamlContent)
         }
@@ -342,11 +339,11 @@ struct MvpProfileCard: View {
         HStack(alignment: .center) {
             HStack(alignment: .center, spacing: 8) {
                 Image(systemName: "slider.horizontal.3")
-                    .font(.system(size: 15))
+                    .font(.subheadline)
                     .foregroundStyle(MvpTheme.textPrimary)
 
                 Text("配置文件")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.callout.weight(.semibold))
                     .foregroundStyle(MvpTheme.textPrimary)
             }
 
@@ -361,9 +358,9 @@ struct MvpProfileCard: View {
                 }, label: {
                     HStack(spacing: 4) {
                         Image(systemName: "trash")
-                            .font(.system(size: 12))
+                            .font(.caption)
                         Text("重置")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.footnote.weight(.semibold))
                     }
                     .foregroundStyle(MvpTheme.dangerText)
                     .padding(.horizontal, 10)
@@ -380,9 +377,9 @@ struct MvpProfileCard: View {
                 }, label: {
                     HStack(spacing: 4) {
                         Image(systemName: "chevron.up")
-                            .font(.system(size: 12))
+                            .font(.caption)
                         Text("收起")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.footnote.weight(.semibold))
                     }
                     .foregroundStyle(MvpTheme.textSecondary)
                     .padding(.horizontal, 10)
@@ -403,7 +400,7 @@ struct MvpProfileCard: View {
                     text: $urlInput,
                     prompt: Text("粘贴配置文件链接").foregroundStyle(MvpTheme.textSecondary)
                 )
-                .font(.system(size: 14))
+                .font(.footnote)
                 .foregroundStyle(MvpTheme.textPrimary)
                 .tint(MvpTheme.activeColor)
                 .textInputAutocapitalization(.never)
@@ -413,12 +410,8 @@ struct MvpProfileCard: View {
                 .padding(.trailing, 40)
                 .padding(.vertical, 12)
                 .focused(isInputFocused)
-                .background(MvpTheme.inputBg)
-                .clipShape(.rect(cornerRadius: 12))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(MvpTheme.borderColor, lineWidth: 1)
-                )
+                .background(Color(uiColor: .tertiarySystemFill))
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 
                 Button(action: {
                     if let pasted = UIPasteboard.general.string {
@@ -427,7 +420,7 @@ struct MvpProfileCard: View {
                     }
                 }, label: {
                     Image(systemName: "doc.on.clipboard")
-                        .font(.system(size: 15))
+                        .font(.subheadline)
                         .foregroundStyle(MvpTheme.textSecondary)
                         .frame(width: 32, height: 32)
                         .contentShape(Rectangle())
@@ -444,7 +437,8 @@ struct MvpProfileCard: View {
                 HStack(alignment: .center, spacing: 8) {
                     ZStack {
                         Image(systemName: "square.and.arrow.down.fill")
-                            .font(.system(size: 15))
+                            .font(.subheadline)
+                            .symbolRenderingMode(.hierarchical)
                             .opacity(mvpManager.isImporting ? 0 : 1)
                             
                         ProgressView()
@@ -455,7 +449,7 @@ struct MvpProfileCard: View {
                     }
                     .animation(.easeInOut(duration: 0.2), value: mvpManager.isImporting)
                     Text("下载并导入")
-                        .font(.system(size: 15, weight: .bold))
+                        .font(.subheadline.weight(.bold))
                 }
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
@@ -470,16 +464,21 @@ struct MvpProfileCard: View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 12) {
                 Text(activeProfileTitle)
-                    .font(.system(size: 17, weight: .bold))
+                    .font(.headline.weight(.bold))
                     .foregroundStyle(MvpTheme.textPrimary)
                     .lineLimit(1)
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text("更新于：\(updateDateStr)")
+                        .font(.footnote)
+                        .monospacedDigit()
+                        .foregroundStyle(MvpTheme.textSecondary)
+                        
                     Text("版本：\(versionStr)\(mvpManager.ruleProvidersVersionSuffix)")
+                        .font(.footnote)
+                        .fontDesign(.rounded)
+                        .foregroundStyle(MvpTheme.textSecondary)
                 }
-                .font(.system(size: 13, weight: .regular))
-                .foregroundStyle(MvpTheme.textSecondary)
             }
 
             Spacer()
@@ -495,7 +494,8 @@ struct MvpProfileCard: View {
                 HStack(alignment: .center, spacing: 6) {
                     ZStack {
                         Image(systemName: "arrow.triangle.2.circlepath")
-                            .font(.system(size: 12, weight: .bold))
+                            .font(.caption.weight(.bold))
+                            .symbolRenderingMode(.hierarchical)
                             .opacity(mvpManager.isUpdating ? 0 : 1)
                             
                         ProgressView()
@@ -506,7 +506,7 @@ struct MvpProfileCard: View {
                     }
                     .animation(.easeInOut(duration: 0.2), value: mvpManager.isUpdating)
                     Text("更新")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.footnote.weight(.bold))
                 }
                 .foregroundStyle(.white)
                 .padding(.horizontal, 16)
@@ -637,15 +637,15 @@ struct MvpView: View {
             HStack(spacing: 8) {
                 Image(systemName: toastIconName(for: mvpManager.toastType))
                     .foregroundStyle(.white)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.footnote.weight(.semibold))
                 Text(msg)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.footnote.weight(.medium))
                     .foregroundStyle(.white)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
             .background(MvpTheme.toastBg)
-            .clipShape(.rect(cornerRadius: 12))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
             .padding(.bottom, 24)
             .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -688,17 +688,20 @@ struct MvpView: View {
 
 // MARK: - Modifiers
 
-private struct MvpPrimaryButtonModifier: ViewModifier {
-    func body(content: Content) -> some View {
-        content
+private struct MvpPrimaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
             .background(MvpTheme.activeColor)
-            .clipShape(.rect(cornerRadius: 12))
-            .shadow(color: MvpTheme.activeColor.opacity(0.2), radius: 12, x: 0, y: 4)
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .shadow(color: MvpTheme.activeColor.opacity(0.2), radius: 12, x: 0, y: configuration.isPressed ? 2 : 4)
+            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
+            .opacity(configuration.isPressed ? 0.9 : 1.0)
+            .animation(.spring(response: 0.2, dampingFraction: 0.6), value: configuration.isPressed)
     }
 }
 
 fileprivate extension View {
     func applyMvpPrimaryButtonStyle() -> some View {
-        self.modifier(MvpPrimaryButtonModifier())
+        self.buttonStyle(MvpPrimaryButtonStyle())
     }
 }
