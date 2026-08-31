@@ -366,7 +366,8 @@ struct MvpProfileCard: View {
                             .font(.system(size: 13, weight: .semibold))
                     }
                     .foregroundStyle(MvpTheme.dangerText)
-                    .padding(8)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
                     .background(MvpTheme.dangerColor.opacity(0.05))
                     .clipShape(.rect(cornerRadius: 8))
                 })
@@ -384,12 +385,14 @@ struct MvpProfileCard: View {
                             .font(.system(size: 13, weight: .semibold))
                     }
                     .foregroundStyle(MvpTheme.textSecondary)
-                    .padding(8)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
                     .background(MvpTheme.inactiveBadgeBg.opacity(0.4))
                     .clipShape(.rect(cornerRadius: 8))
                 })
             }
         }
+        .frame(minHeight: 32)
     }
 
     private func buildImportState() -> some View {
