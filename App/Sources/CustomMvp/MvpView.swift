@@ -21,7 +21,7 @@ struct MvpHeaderBar: View {
         ZStack(alignment: .center) {
             // Centered Title with tap gesture
             Text("Block Ad")
-                .font(.callout.weight(.semibold))
+                .font(.callout.weight(.medium))
                 .foregroundStyle(MvpTheme.textPrimary)
                 .contentShape(Rectangle())
                 .onTapGesture {
@@ -326,7 +326,8 @@ struct MvpProfileCard: View {
             }
             .padding(.vertical, 4)
         }
-        .padding(16)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
         .background(MvpTheme.cardBg)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .shadow(color: Color.black.opacity(0.04), radius: 12, x: 0, y: 4)
@@ -363,10 +364,10 @@ struct MvpProfileCard: View {
                             .font(.footnote.weight(.semibold))
                     }
                     .foregroundStyle(MvpTheme.dangerText)
-                    .padding(.horizontal, 10)
+                    .padding(.horizontal, 12)
                     .padding(.vertical, 6)
                     .background(MvpTheme.dangerColor.opacity(0.05))
-                    .clipShape(.rect(cornerRadius: 8))
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 })
             } else if activeProfile != nil {
                 Button(action: {
@@ -382,10 +383,10 @@ struct MvpProfileCard: View {
                             .font(.footnote.weight(.semibold))
                     }
                     .foregroundStyle(MvpTheme.textSecondary)
-                    .padding(.horizontal, 10)
+                    .padding(.horizontal, 12)
                     .padding(.vertical, 6)
                     .background(MvpTheme.inactiveBadgeBg.opacity(0.4))
-                    .clipShape(.rect(cornerRadius: 8))
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 })
             }
         }
@@ -454,8 +455,8 @@ struct MvpProfileCard: View {
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
-                .applyMvpPrimaryButtonStyle()
             })
+            .applyMvpPrimaryButtonStyle()
             .disabled(mvpManager.isImporting)
         }
     }
@@ -464,7 +465,7 @@ struct MvpProfileCard: View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 12) {
                 Text(activeProfileTitle)
-                    .font(.headline.weight(.bold))
+                    .font(.headline.weight(.semibold))
                     .foregroundStyle(MvpTheme.textPrimary)
                     .lineLimit(1)
 
@@ -511,8 +512,8 @@ struct MvpProfileCard: View {
                 .foregroundStyle(.white)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 10)
-                .applyMvpPrimaryButtonStyle()
             })
+            .applyMvpPrimaryButtonStyle()
         }
     }
 }
