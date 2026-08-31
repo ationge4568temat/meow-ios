@@ -53,7 +53,7 @@ struct MvpHeaderBar: View {
             }
         }
         .frame(height: 36)
-        .alert("输入高级模式密码", isPresented: $showingPasswordPrompt) {
+        .alert("高级模式密码验证", isPresented: $showingPasswordPrompt) {
             SecureField("请输入密码", text: $passwordInput)
             Button("取消", role: .cancel) { }
             Button("确认") {
