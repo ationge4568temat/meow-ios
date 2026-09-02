@@ -49,6 +49,7 @@ struct MvpHeaderBar: View {
                     .padding(.horizontal, 4)
                     .padding(.vertical, 8)
                 })
+                .buttonStyle(.plain)
                 .disabled(exportingLogs)
             }
         }
@@ -368,6 +369,7 @@ struct MvpProfileCard: View {
                     .background(MvpTheme.dangerColor.opacity(0.05))
                     .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                 })
+                .buttonStyle(.plain)
             } else if activeProfile != nil {
                 Button(action: {
                     MvpView.log.info("Collapse profile input button tapped")
@@ -386,6 +388,7 @@ struct MvpProfileCard: View {
                     .background(MvpTheme.inactiveBadgeBg.opacity(0.35))
                     .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                 })
+                .buttonStyle(.plain)
             }
         }
         .frame(minHeight: 36)
@@ -424,6 +427,7 @@ struct MvpProfileCard: View {
                         .frame(width: 32, height: 32)
                         .contentShape(Rectangle())
                 })
+                .buttonStyle(.plain)
                 .padding(.trailing, 4)
             }
 
