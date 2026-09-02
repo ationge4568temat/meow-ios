@@ -372,9 +372,10 @@ struct MvpProfileCard: View {
                             .font(.footnote.weight(.semibold))
                     }
                     .foregroundStyle(MvpTheme.dangerText)
-                    .padding(8)
+                    .padding(.horizontal, 8)
+                    .frame(height: 30)
                     .background(MvpTheme.dangerColor.opacity(0.05))
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 })
                 .buttonStyle(.plain)
             } else if activeProfile != nil {
@@ -391,14 +392,15 @@ struct MvpProfileCard: View {
                             .font(.footnote.weight(.semibold))
                     }
                     .foregroundStyle(MvpTheme.textSecondary)
-                    .padding(8)
+                    .padding(.horizontal, 8)
+                    .frame(height: 30)
                     .background(MvpTheme.inactiveBadgeBg.opacity(0.35))
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 })
                 .buttonStyle(.plain)
             }
         }
-        .frame(minHeight: 36)
+        .frame(height: 30)
     }
 
     private func buildImportState() -> some View {
