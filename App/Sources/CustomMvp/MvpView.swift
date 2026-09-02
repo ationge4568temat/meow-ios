@@ -331,7 +331,7 @@ struct MvpProfileCard: View {
             }
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 14)
+        .padding(.vertical, 12)
         .background(MvpTheme.cardBg)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(
