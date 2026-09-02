@@ -255,6 +255,10 @@ struct MvpQuickInfoCards: View {
         .padding(16)
         .background(MvpTheme.cardBg)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color.black.opacity(0.05), lineWidth: 0.5)
+        )
         .shadow(color: Color.black.opacity(0.02), radius: 12, x: 0, y: 3)
     }
 }
@@ -310,7 +314,7 @@ struct MvpProfileCard: View {
     }
 
     var body: some View {
-        VStack(spacing: 14) {
+        VStack(spacing: 12) {
             buildProfileHeader()
 
             Divider()
@@ -325,12 +329,15 @@ struct MvpProfileCard: View {
                     .opacity(hasProfile ? 0 : 1)
                     .allowsHitTesting(!hasProfile)
             }
-            .padding(.vertical, 4)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .background(MvpTheme.cardBg)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color.black.opacity(0.05), lineWidth: 0.5)
+        )
         .shadow(color: Color.black.opacity(0.02), radius: 12, x: 0, y: 3)
         .task(id: activeProfile?.lastUpdated) {
             versionStr = Self.parseRuleCount(from: activeProfile?.yamlContent)
@@ -476,11 +483,13 @@ struct MvpProfileCard: View {
                         .font(.footnote)
                         .monospacedDigit()
                         .foregroundStyle(MvpTheme.textSecondary)
+                        .lineLimit(1)
                         
                     Text("版本：\(versionStr)\(mvpManager.ruleProvidersVersionSuffix)")
                         .font(.footnote)
                         .fontDesign(.rounded)
                         .foregroundStyle(MvpTheme.textSecondary)
+                        .lineLimit(1)
                 }
             }
 
