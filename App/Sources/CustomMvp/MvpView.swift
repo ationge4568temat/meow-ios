@@ -422,7 +422,7 @@ struct MvpProfileCard: View {
                 .padding(.trailing, 40)
                 .padding(.vertical, 12)
                 .focused(isInputFocused)
-                .background(Color(uiColor: .systemGray6))
+                .background(MvpTheme.inputBg)
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 
                 Button(action: {
