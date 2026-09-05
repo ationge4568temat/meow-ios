@@ -54,8 +54,8 @@ struct MvpHeaderBar: View {
             }
         }
         .frame(height: 36)
-        .alert("切换至高级模式", isPresented: $showingPasswordPrompt) {
-            SecureField("请输入密码", text: $passwordInput)
+        .alert("切换高级模式", isPresented: $showingPasswordPrompt) {
+            SecureField("输入密码", text: $passwordInput)
             Button("取消", role: .cancel) { }
             Button("确认") {
                 if passwordInput == "fkad666" {
@@ -63,14 +63,14 @@ struct MvpHeaderBar: View {
                     withAnimation(.snappy) {
                         mvpManager.isMvpMode = false
                     }
-                    mvpManager.showToast("已切换至高级模式", type: .info)
+                    mvpManager.showToast("已切换高级模式", type: .info)
                 } else {
                     MvpView.log.info("Minimal header 5-tap gesture password incorrect")
                     mvpManager.showToast("密码错误", type: .error)
                 }
             }
         } message: {
-            Text("此功能或导致无法联网，需密码验证")
+            Text("此功能或导致无法联网，需验证密码")
         }
     }
 
