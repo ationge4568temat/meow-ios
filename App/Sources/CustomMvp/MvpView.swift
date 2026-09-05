@@ -252,7 +252,8 @@ struct MvpQuickInfoCards: View {
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
         .background(MvpTheme.cardBg)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(
