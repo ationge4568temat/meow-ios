@@ -18,7 +18,7 @@ enum MvpTheme: Sendable {
     // Additional UI Colors
     static let dangerColor = Color(red: 239 / 255.0, green: 68 / 255.0, blue: 68 / 255.0) // #EF4444
     static let dangerText = Color(red: 248 / 255.0, green: 113 / 255.0, blue: 113 / 255.0) // #F87171 (soft red)
-    static let inputBg = Color(red: 249 / 255.0, green: 250 / 255.0, blue: 251 / 255.0) // #F9FAFB
+    static let inputBg = Color(red: 244 / 255.0, green: 245 / 255.0, blue: 248 / 255.0) // #F4F5F8
 
     // Typography Colors
     static let textPrimary = Color(red: 0x0F / 255.0, green: 0x17 / 255.0, blue: 0x2A / 255.0) // #0F172A
