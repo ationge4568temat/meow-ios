@@ -178,11 +178,19 @@ struct MvpStatusHero: View {
             Text(statusTitle)
                 .font(.title2.weight(.bold))
                 .foregroundStyle(MvpTheme.textPrimary)
+                .lineLimit(1)
+                .frame(height: 28) // 锁定槽位高度，防止不同文本度量或设备宽度下换行导致页面抖动
+                .id(statusTitle)   // 加上 id 使得文字变化时产生过渡动画而不是生硬变化
+                .transition(.opacity)
                 .animation(.easeInOut(duration: 0.2), value: appModel.vpnManager.stage)
 
             Text(statusSubtitle)
                 .font(.footnote.weight(.medium))
                 .foregroundStyle(MvpTheme.textSecondary)
+                .lineLimit(1)
+                .frame(height: 20) // 锁定槽位高度
+                .id(statusSubtitle)
+                .transition(.opacity)
                 .animation(.easeInOut(duration: 0.2), value: appModel.vpnManager.stage)
         }
     }
