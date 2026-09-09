@@ -1,0 +1,19 @@
+name: Delete old workflow
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 0'
+    # Run monthly, at 00:00 on the 1st day of month.
+
+jobs:
+  clear:
+    permissions:
+      actions: write
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: GitRML/delete-workflow-runs@main
+        with:
+          retain_days: 1
+          keep_minimum_runs: 1
