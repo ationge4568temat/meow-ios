@@ -528,7 +528,7 @@ struct MvpProfileCard: View {
                             .opacity(mvpManager.isUpdating ? 1 : 0)
                     }
                     .animation(.easeInOut(duration: 0.2), value: mvpManager.isUpdating)
-                    Text("更新")
+                    Text("同步")
                         .font(.footnote.weight(.bold))
                 }
                 .foregroundStyle(.white)
