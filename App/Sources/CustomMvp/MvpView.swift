@@ -375,7 +375,7 @@ struct MvpProfileCard: View {
                     }
                 }, label: {
                     HStack(spacing: 4) {
-                        Image(systemName: "trash")
+                        Image(systemName: "arrow.counterclockwise")
                             .font(.caption)
                         Text("重置")
                             .font(.footnote.weight(.semibold))
