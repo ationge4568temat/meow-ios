@@ -459,7 +459,7 @@ struct MvpProfileCard: View {
             }, label: {
                 HStack(alignment: .center, spacing: 8) {
                     ZStack {
-                        Image(systemName: "square.and.arrow.down")
+                        Image(systemName: "square.and.arrow.down.fill")
                             .font(.subheadline)
                             .symbolRenderingMode(.hierarchical)
                             .opacity(mvpManager.isImporting ? 0 : 1)
