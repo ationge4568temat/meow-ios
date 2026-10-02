@@ -1,3 +1,4 @@
+import MeowModels
 import SwiftData
 import SwiftUI
 import UniformTypeIdentifiers
