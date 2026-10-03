@@ -193,7 +193,7 @@ struct ProfileAutoUpdaterTests {
     private func makeUpdater(now: Date, session: URLSession) throws -> Harness {
         let container = try ModelContainer(
             for: Profile.self,
-            configurations: ModelConfiguration(isStoredInMemoryOnly: true),
+            configurations: ModelConfiguration(isStoredInMemoryOnly: true, cloudKitDatabase: .none),
         )
         let context = ModelContext(container)
         let dir = FileManager.default.temporaryDirectory
