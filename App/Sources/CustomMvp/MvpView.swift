@@ -277,11 +277,15 @@ struct MvpQuickInfoCards: View {
 struct MvpProfileCard: View {
     let appModel: AppModel
     let activeProfile: Profile?
-    let mvpManager: MvpManager
+    @Bindable var mvpManager: MvpManager
 
     @State private var urlInput: String = ""
     var isInputFocused: FocusState<Bool>.Binding
     @State private var versionStr: String = "v0"
+
+    private var versionDisplay: String {
+        "版本：\(versionStr)\(mvpManager.ruleProvidersVersionSuffix)"
+    }
 
     private var hasProfile: Bool {
         activeProfile != nil && !mvpManager.showInputArea
@@ -493,11 +497,12 @@ struct MvpProfileCard: View {
                         .foregroundStyle(MvpTheme.textSecondary)
                         .lineLimit(1)
                         
-                    Text("版本：\(versionStr)\(mvpManager.ruleProvidersVersionSuffix)")
+                    Text(versionDisplay)
                         .font(.footnote)
                         .fontDesign(.rounded)
                         .foregroundStyle(MvpTheme.textSecondary)
                         .lineLimit(1)
+                        .id(versionDisplay)
                 }
             }
 
@@ -548,7 +553,7 @@ struct MvpView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Query private var profiles: [Profile]
 
-    private let mvpManager = MvpManager.shared
+    @State private var mvpManager = MvpManager.shared
 
     @State private var logExportDocument: MvpLogExportDocument?
     @State private var showingLogExporter = false
