@@ -154,7 +154,12 @@ final class MvpManager {
             let profile: Profile
             if let existing = try? context.fetch(fetch).first {
                 Self.log.info("Found existing default profile: \(existing.id.uuidString, privacy: .public). Updating info and refreshing...")
-                try appModel.subscriptionService.updateInfo(existing, name: profileName, url: trimmed)
+                try appModel.subscriptionService.updateInfo(
+                    existing,
+                    name: profileName,
+                    url: trimmed,
+                    updateInterval: .manual,
+                )
                 try await appModel.subscriptionService.refresh(existing)
                 try appModel.subscriptionService.select(existing)
                 profile = existing
