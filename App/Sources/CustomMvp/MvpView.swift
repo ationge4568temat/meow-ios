@@ -147,52 +147,33 @@ struct MvpStatusHero: View {
     let activeProfile: Profile?
     let mvpManager: MvpManager
 
-    private var isSwitchOn: Bool {
-        switch appModel.vpnManager.stage {
-        case .connected, .connecting, .preparing: return true
-        default: return false
-        }
-    }
-
-    private var statusTitle: String {
-        switch appModel.vpnManager.stage {
-        case .connected: return "防护已开启"
-        case .connecting, .preparing: return "防护启动中"
-        default: return "防护已暂停"
-        }
-    }
-
-    private var statusSubtitle: String {
-        switch appModel.vpnManager.stage {
-        case .connected: return "防护运行中 · 智能拦截与防跟踪"
-        case .connecting, .preparing: return "正在启动防护服务..."
-        default: return "点击上方按钮开启防护"
-        }
+    private var status: MvpTunnelStatus {
+        mvpManager.tunnelStatus(for: appModel.vpnManager.stage)
     }
 
     var body: some View {
         VStack(spacing: 16) {
-            MvpToggleSwitch(isOn: isSwitchOn) {
+            MvpToggleSwitch(isOn: status.isSwitchOn) {
                 mvpManager.toggleConnection(appModel: appModel, activeProfile: activeProfile)
             }
 
-            Text(statusTitle)
+            Text(status.statusTitle)
                 .font(.title2.weight(.bold))
                 .foregroundStyle(MvpTheme.textPrimary)
                 .lineLimit(1)
                 .frame(height: 28) // 锁定槽位高度，防止不同文本度量或设备宽度下换行导致页面抖动
-                .id(statusTitle)   // 加上 id 使得文字变化时产生过渡动画而不是生硬变化
+                .id(status.statusTitle) // 加上 id 使得文字变化时产生过渡动画而不是生硬变化
                 .transition(.opacity)
-                .animation(.easeInOut(duration: 0.2), value: appModel.vpnManager.stage)
+                .animation(.easeInOut(duration: 0.2), value: status)
 
-            Text(statusSubtitle)
+            Text(status.statusSubtitle)
                 .font(.footnote.weight(.medium))
                 .foregroundStyle(MvpTheme.textSecondary)
                 .lineLimit(1)
                 .frame(height: 20) // 锁定槽位高度
-                .id(statusSubtitle)
+                .id(status.statusSubtitle)
                 .transition(.opacity)
-                .animation(.easeInOut(duration: 0.2), value: appModel.vpnManager.stage)
+                .animation(.easeInOut(duration: 0.2), value: status)
         }
     }
 }
@@ -200,17 +181,10 @@ struct MvpStatusHero: View {
 @MainActor
 struct MvpQuickInfoCards: View {
     let appModel: AppModel
+    let mvpManager: MvpManager
 
-    private var isStart: Bool {
-        appModel.vpnManager.stage == .connected
-    }
-
-    private var coreStatusText: String {
-        switch appModel.vpnManager.stage {
-        case .connected: return "正常"
-        case .connecting, .preparing: return "启动中"
-        default: return "停用"
-        }
+    private var status: MvpTunnelStatus {
+        mvpManager.tunnelStatus(for: appModel.vpnManager.stage)
     }
 
     var body: some View {
@@ -218,15 +192,15 @@ struct MvpQuickInfoCards: View {
             buildInfoItem(
                 iconName: "shield.fill",
                 title: "防护状态",
-                value: isStart ? "已开启" : "未开启",
-                isActive: isStart
+                value: status == .connected ? "已开启" : (status == .transitioning ? "切换中" : "未开启"),
+                isActive: status == .connected
             )
 
             buildInfoItem(
                 iconName: "cpu",
                 title: "内核状态",
-                value: coreStatusText,
-                isActive: isStart
+                value: status.coreStatusText,
+                isActive: status == .connected
             )
         }
     }
@@ -285,6 +259,10 @@ struct MvpProfileCard: View {
 
     private var hasProfile: Bool {
         activeProfile != nil && !mvpManager.showInputArea
+    }
+
+    private var isSyncDisabled: Bool {
+        mvpManager.isUpdating || mvpManager.tunnelStatus(for: appModel.vpnManager.stage) == .transitioning
     }
 
     private var activeProfileTitle: String {
@@ -474,7 +452,7 @@ struct MvpProfileCard: View {
                 .padding(.vertical, 12)
             })
             .applyMvpPrimaryButtonStyle()
-            .disabled(mvpManager.isImporting)
+            .disabled(mvpManager.isImporting || mvpManager.tunnelStatus(for: appModel.vpnManager.stage) == .transitioning)
         }
     }
 
@@ -533,6 +511,7 @@ struct MvpProfileCard: View {
                 .padding(.vertical, 10)
             })
             .applyMvpPrimaryButtonStyle()
+            .disabled(isSyncDisabled)
         }
     }
 }
@@ -582,7 +561,7 @@ struct MvpView: View {
                             Spacer(minLength: 24)
 
                             VStack(spacing: 16) {
-                                MvpQuickInfoCards(appModel: appModel)
+                                MvpQuickInfoCards(appModel: appModel, mvpManager: mvpManager)
                                 MvpProfileCard(
                                     appModel: appModel,
                                     activeProfile: actualProfile,
@@ -632,7 +611,10 @@ struct MvpView: View {
         }
         .onChange(of: appModel.vpnManager.stage) { _, stage in
             if stage == .connected {
-                Task { await mvpManager.fetchRuleProviderCounts() }
+                Task {
+                    try? await Task.sleep(for: .seconds(1.0))
+                    await mvpManager.fetchRuleProviderCounts()
+                }
             }
         }
         .onAppear {
