@@ -21,8 +21,9 @@ struct MvpHeaderBar: View {
         ZStack(alignment: .center) {
             // Centered Title with tap gesture
             Text("Block Ad")
-                .font(.callout.weight(.medium))
+                .font(.subheadline.weight(.medium))
                 .foregroundStyle(MvpTheme.textPrimary)
+                .frame(height: 36)
                 .contentShape(Rectangle())
                 .onTapGesture {
                     handleMinimalTap()
@@ -36,18 +37,18 @@ struct MvpHeaderBar: View {
                 }, label: {
                     ZStack {
                         Image(systemName: "doc.plaintext")
-                            .font(.footnote)
+                            .font(.subheadline)
                             .foregroundStyle(MvpTheme.textSecondary)
                             .opacity(exportingLogs ? 0 : 0.8)
-                            
+
                         ProgressView()
                             .progressViewStyle(.circular)
-                            .scaleEffect(0.7) // 匹配 14pt Icon (20 * 0.7 = 14)
+                            .scaleEffect(0.75) // 匹配 15pt Icon (20 * 0.75 = 15)
                             .opacity(exportingLogs ? 1 : 0)
                     }
                     .animation(.easeInOut(duration: 0.2), value: exportingLogs)
-                    .padding(.horizontal, 4)
-                    .padding(.vertical, 8)
+                    .frame(width: 36, height: 36)
+                    .contentShape(Rectangle())
                 })
                 .buttonStyle(.plain)
                 .disabled(exportingLogs)
