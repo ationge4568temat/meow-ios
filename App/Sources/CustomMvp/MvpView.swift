@@ -481,7 +481,7 @@ struct MvpProfileCard: View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 12) {
                 Text(activeProfileTitle)
-                    .font(.headline.weight(.semibold))
+                    .font(.callout.weight(.medium))
                     .foregroundStyle(MvpTheme.textPrimary)
                     .lineLimit(1)
 
