@@ -17,6 +17,51 @@ public enum MvpToastType {
 /// MvpManager coordinates MVP-specific state, preference silents, and bridges
 /// the simplified Block Ad UI with meow-ios core AppModel & VpnManager.
 @MainActor
+/// 统一抽象的 MVP VPN 隧道状态（收敛连接中、断开中、准备中等过渡状态）
+enum MvpTunnelStatus: Equatable, Sendable {
+    case connected     // 隧道开启运行中
+    case transitioning // 正在开启 / 正在关闭 / 切换中
+    case disconnected  // 隧道已停用 / 未开启
+
+    init(stage: VpnStage, isToggling: Bool = false) {
+        if stage == .connected {
+            self = .connected
+        } else if isToggling || stage == .connecting || stage == .stopping || stage == .preparing {
+            self = .transitioning
+        } else {
+            self = .disconnected
+        }
+    }
+
+    var isSwitchOn: Bool {
+        self != .disconnected
+    }
+
+    var statusTitle: String {
+        switch self {
+        case .connected: return "防护已开启"
+        case .transitioning: return "防护启动中"
+        case .disconnected: return "防护已暂停"
+        }
+    }
+
+    var statusSubtitle: String {
+        switch self {
+        case .connected: return "防护运行中 · 智能拦截与防跟踪"
+        case .transitioning: return "正在启动防护服务..."
+        case .disconnected: return "点击上方按钮开启防护"
+        }
+    }
+
+    var coreStatusText: String {
+        switch self {
+        case .connected: return "正常"
+        case .transitioning: return "切换中"
+        case .disconnected: return "停用"
+        }
+    }
+}
+
 @Observable
 final class MvpManager {
     static let shared = MvpManager()
@@ -28,6 +73,16 @@ final class MvpManager {
     var isImporting: Bool = false
     var isUpdating: Bool = false
     var isConnectionToggling: Bool = false
+
+    /// 是否有后台任务处理中（导入、同步、或切换连接中）
+    var isBusy: Bool {
+        isImporting || isUpdating || isConnectionToggling
+    }
+
+    /// 获取当前统一的隧道状态
+    func tunnelStatus(for stage: VpnStage) -> MvpTunnelStatus {
+        MvpTunnelStatus(stage: stage, isToggling: isConnectionToggling)
+    }
 
     var ruleProvidersVersionSuffix: String = AppGroup.defaults.string(forKey: "ruleProvidersVersionSuffix") ?? ""
 
@@ -41,8 +96,9 @@ final class MvpManager {
     private var toastTask: Task<Void, Never>?
 
     private let apiSession: URLSession = {
-        let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 15.0
+        let config = URLSessionConfiguration.ephemeral
+        config.timeoutIntervalForRequest = 10.0
+        config.requestCachePolicy = .reloadIgnoringLocalCacheData
         return URLSession(configuration: config)
     }()
 
@@ -66,17 +122,18 @@ final class MvpManager {
     }
 
     func toggleConnection(appModel: AppModel, activeProfile: Profile?) {
-        guard !isConnectionToggling, !isUpdating, !isImporting else {
-            Self.log.info("toggleConnection ignored: busy state (isConnectionToggling: \(self.isConnectionToggling, privacy: .public), isUpdating: \(self.isUpdating, privacy: .public), isImporting: \(self.isImporting, privacy: .public))")
+        guard !isBusy else {
+            Self.log.info("toggleConnection ignored: busy state")
             if isUpdating || isImporting {
                 showToast("操作处理中，请稍候...", type: .warning, duration: 1.5)
             }
             return
         }
 
-        if appModel.vpnManager.stage == .stopping {
-            Self.log.info("toggleConnection ignored: VPN is currently disconnecting.")
-            showToast("正在断开服务，请稍候...", type: .info, duration: 1.5)
+        let status = tunnelStatus(for: appModel.vpnManager.stage)
+        if status == .transitioning {
+            Self.log.info("toggleConnection ignored: VPN is in transitioning state.")
+            showToast("服务状态切换中，请稍候...", type: .info, duration: 1.5)
             return
         }
 
@@ -88,23 +145,15 @@ final class MvpManager {
         }
 
         isConnectionToggling = true
-
-        let isActiveState: Bool
-        switch appModel.vpnManager.stage {
-        case .connected, .connecting, .preparing:
-            isActiveState = true
-        default:
-            isActiveState = false
-        }
-
-        Self.log.info("toggleConnection triggered (targetAction: \(isActiveState ? "disconnect" : "connect", privacy: .public), currentStage: \(String(describing: appModel.vpnManager.stage), privacy: .public))")
+        let shouldDisconnect = (status == .connected)
+        Self.log.info("toggleConnection triggered (action: \(shouldDisconnect ? "disconnect" : "connect", privacy: .public))")
 
         Task {
             defer {
                 isConnectionToggling = false
             }
 
-            if isActiveState {
+            if shouldDisconnect {
                 Self.log.info("Disconnecting VPN via vpnManager...")
                 await appModel.vpnManager.disconnect()
             } else {
@@ -172,8 +221,8 @@ final class MvpManager {
 
             Self.log.info("importConfig successfully saved profile: \(profile.id.uuidString, privacy: .public)")
 
-            if appModel.vpnManager.stage.isActive || appModel.vpnManager.stage == .preparing {
-                Self.log.info("Is active or preparing; disconnecting before clearing local rule cache...")
+            if tunnelStatus(for: appModel.vpnManager.stage) != .disconnected {
+                Self.log.info("Tunnel is active or transitioning; disconnecting before clearing local rule cache...")
                 await appModel.vpnManager.disconnect()
             }
 
@@ -231,6 +280,15 @@ final class MvpManager {
             Self.log.info("updateSubscription skipped: already updating")
             return
         }
+
+        if tunnelStatus(for: appModel.vpnManager.stage) == .transitioning {
+            Self.log.info("updateSubscription skipped: VPN is transitioning")
+            if !silent {
+                showToast("服务状态切换中，请稍候同步...", type: .warning, duration: 1.5)
+            }
+            return
+        }
+
         Self.log.info("updateSubscription starting for profile: \(activeProfile.name, privacy: .public) (silent: \(silent, privacy: .public))")
         isUpdating = true
         defer { isUpdating = false }
@@ -238,12 +296,16 @@ final class MvpManager {
         do {
             try await appModel.subscriptionService.refresh(activeProfile)
 
-            if appModel.vpnManager.stage == .connected {
+            switch tunnelStatus(for: appModel.vpnManager.stage) {
+            case .connected:
                 Self.log.info("VPN is connected; refreshing rule providers via API...")
                 await refreshRuleProviders(appModel: appModel, activeProfile: activeProfile)
-            } else {
-                Self.log.info("VPN is not connected; clearing local rule cache...")
+            case .disconnected:
+                Self.log.info("VPN is safely disconnected; clearing local rule cache...")
                 clearLocalRuleCache(activeProfile: activeProfile)
+            case .transitioning:
+                Self.log.warning("VPN is transitioning; skipping cache purge to avoid contention.")
+                updateRuleProvidersSuffix("")
             }
 
             Self.log.info("updateSubscription succeeded for profile: \(activeProfile.name, privacy: .public)")
@@ -263,43 +325,43 @@ final class MvpManager {
     /// When VPN is connected, trigger the embedded engine to force update all rule-providers via REST API.
     func refreshRuleProviders(appModel: AppModel, activeProfile: Profile?) async {
         guard let creds = AppGroup.apiCredentials(), creds.port > 0 else {
-            Self.log.error("refreshRuleProviders failed: No API credentials available.")
+            Self.log.error("refreshRuleProviders: No API credentials available; sending reload anyway.")
+            appModel.ipcBridge.send(.reload)
             return
         }
 
         Self.log.info("Starting refreshRuleProviders via REST API on port \(creds.port, privacy: .public)")
 
-        guard let providers = await fetchRuleProviders(port: creds.port, secret: creds.secret) else {
-            Self.log.warning("Failed to fetch rule providers from API.")
-            return
-        }
+        if let providers = await fetchRuleProviders(port: creds.port, secret: creds.secret) {
+            let providerNames = Array(providers.keys)
+            let details = providers.values.compactMap { stub -> String? in
+                guard let name = stub.name else { return nil }
+                let countStr = stub.ruleCount.map { "\($0)" } ?? "?"
+                return "\(name)(\(countStr))"
+            }.joined(separator: ", ")
 
-        let providerNames = Array(providers.keys)
-        let details = providers.values.compactMap { stub -> String? in
-            guard let name = stub.name else { return nil }
-            let countStr = stub.ruleCount.map { "\($0)" } ?? "?"
-            return "\(name)(\(countStr))"
-        }.joined(separator: ", ")
+            Self.log.info("Successfully fetched \(providerNames.count, privacy: .public) rule providers from API: \(details, privacy: .public)")
 
-        Self.log.info("Successfully fetched \(providerNames.count, privacy: .public) rule providers from API: \(details, privacy: .public)")
+            let logger = Self.log
+            let session = apiSession
+            let secret = creds.secret
+            let port = creds.port
 
-        let logger = Self.log
-        let session = apiSession
-        let secret = creds.secret
-        let port = creds.port
-
-        await withTaskGroup(of: Void.self) { group in
-            for name in providerNames {
-                group.addTask {
-                    await Self.updateSingleRuleProvider(name: name, port: port, secret: secret, session: session, logger: logger)
+            await withTaskGroup(of: Void.self) { group in
+                for name in providerNames {
+                    group.addTask {
+                        await Self.updateSingleRuleProvider(name: name, port: port, secret: secret, session: session, logger: logger)
+                    }
                 }
             }
+        } else {
+            Self.log.warning("Failed to fetch rule providers before reload; proceeding to reload config.")
         }
 
         Self.log.info("Sending IPC reload command to apply rule provider updates.")
         appModel.ipcBridge.send(.reload)
 
-        try? await Task.sleep(for: .seconds(2))
+        try? await Task.sleep(for: .seconds(1.0))
         await fetchRuleProviderCounts()
     }
 
@@ -312,11 +374,17 @@ final class MvpManager {
         }
 
         let sortedNames = providers.keys.sorted()
-        let suffix = sortedNames.compactMap { name -> String? in
+        let counts = sortedNames.compactMap { name -> String? in
             guard let count = providers[name]?.ruleCount else { return nil }
             return "\(count)"
-        }.joined(separator: ".")
+        }
 
+        guard counts.count == sortedNames.count else {
+            Self.log.warning("fetchRuleProviderCounts: incomplete rule counts from providers.")
+            return
+        }
+
+        let suffix = counts.joined(separator: ".")
         let newSuffix = suffix.isEmpty ? "" : ".\(suffix)"
         Self.log.info("fetchRuleProviderCounts success: \(newSuffix, privacy: .public)")
         updateRuleProvidersSuffix(newSuffix)
@@ -354,6 +422,8 @@ final class MvpManager {
         guard let baseURL = URL(string: "http://127.0.0.1:\(port)") else { return nil }
         let getURL = baseURL.appending(path: "/providers/rules")
         var getReq = URLRequest(url: getURL)
+        getReq.cachePolicy = .reloadIgnoringLocalCacheData
+        getReq.timeoutInterval = 8.0
         if !secret.isEmpty {
             getReq.setValue("Bearer \(secret)", forHTTPHeaderField: "Authorization")
         }
