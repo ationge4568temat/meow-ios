@@ -356,7 +356,7 @@ struct MvpProfileCard: View {
     private func buildProfileHeader() -> some View {
         HStack(alignment: .center) {
             Label("配置文件", systemImage: "slider.horizontal.3")
-                .font(.callout.weight(.semibold))
+                .font(.subheadline.weight(.medium))
                 .foregroundStyle(MvpTheme.textPrimary)
 
             Spacer()
