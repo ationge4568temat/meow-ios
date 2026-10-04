@@ -173,13 +173,12 @@ final class MvpManager {
             Self.log.info("importConfig successfully saved profile: \(profile.id.uuidString, privacy: .public)")
 
             if appModel.vpnManager.stage.isActive || appModel.vpnManager.stage == .preparing {
-                Self.log.info("is active or preparing; disconnecting before clearing local rule cache...")
+                Self.log.info("Is active or preparing; disconnecting before clearing local rule cache...")
                 await appModel.vpnManager.disconnect()
             }
 
             Self.log.info("Clearing local rule cache...")
             clearLocalRuleCache(activeProfile: profile)
-            updateRuleProvidersSuffix("")
 
             showInputArea = false
             showToast("导入成功", type: .success)
@@ -346,6 +345,7 @@ final class MvpManager {
         }
 
         Self.log.info("Finished clearLocalRuleCache. Deleted files: \(deletedFiles, privacy: .public)")
+        updateRuleProvidersSuffix("")
     }
 
     // MARK: - Private API Helpers
