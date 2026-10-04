@@ -369,7 +369,7 @@ struct MvpProfileCard: View {
                         mvpManager.showInputArea = true
                     }
                 }, label: {
-                    HStack(spacing: 4) {
+                    HStack(spacing: 5) {
                         Image(systemName: "arrow.counterclockwise")
                             .font(.caption)
                         Text("重置")
@@ -390,7 +390,7 @@ struct MvpProfileCard: View {
                         mvpManager.showInputArea = false
                     }
                 }, label: {
-                    HStack(spacing: 4) {
+                    HStack(spacing: 5) {
                         Image(systemName: "chevron.up")
                             .font(.caption)
                         Text("收起")
