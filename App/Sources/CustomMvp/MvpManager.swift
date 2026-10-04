@@ -172,13 +172,14 @@ final class MvpManager {
 
             Self.log.info("importConfig successfully saved profile: \(profile.id.uuidString, privacy: .public)")
 
-            if appModel.vpnManager.stage == .connected {
-                Self.log.info("VPN is connected; refreshing rule providers via API...")
-                await refreshRuleProviders(appModel: appModel, activeProfile: profile)
-            } else {
-                Self.log.info("VPN is not connected; clearing local rule cache...")
-                clearLocalRuleCache(activeProfile: profile)
+            if appModel.vpnManager.stage.isActive || appModel.vpnManager.stage == .preparing {
+                Self.log.info("is active or preparing; disconnecting before clearing local rule cache...")
+                await appModel.vpnManager.disconnect()
             }
+
+            Self.log.info("Clearing local rule cache...")
+            clearLocalRuleCache(activeProfile: profile)
+            updateRuleProvidersSuffix("")
 
             showInputArea = false
             showToast("导入成功", type: .success)
