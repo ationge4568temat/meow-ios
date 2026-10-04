@@ -14,9 +14,6 @@ public enum MvpToastType {
     case warning
 }
 
-/// MvpManager coordinates MVP-specific state, preference silents, and bridges
-/// the simplified Block Ad UI with meow-ios core AppModel & VpnManager.
-@MainActor
 /// 统一抽象的 MVP VPN 隧道状态（收敛连接中、断开中、准备中等过渡状态）
 enum MvpTunnelStatus: Equatable, Sendable {
     case connected     // 隧道开启运行中
@@ -62,6 +59,9 @@ enum MvpTunnelStatus: Equatable, Sendable {
     }
 }
 
+/// MvpManager coordinates MVP-specific state, preference silents, and bridges
+/// the simplified Block Ad UI with meow-ios core AppModel & VpnManager.
+@MainActor
 @Observable
 final class MvpManager {
     static let shared = MvpManager()
