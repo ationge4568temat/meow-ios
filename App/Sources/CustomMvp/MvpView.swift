@@ -122,8 +122,8 @@ struct MvpToggleSwitch: View {
 
                 // Inactive Circle
                 Circle()
-                    .strokeBorder(MvpTheme.inactiveGray, lineWidth: 4)
-                    .frame(width: 24, height: 24)
+                    .strokeBorder(MvpTheme.inactiveGray, lineWidth: 4.5)
+                    .frame(width: 28, height: 28)
                     .scaleEffect(isOn ? 0.5 : 1.0)
                     .opacity(isOn ? 0.0 : 1.0)
             }
