@@ -355,15 +355,9 @@ struct MvpProfileCard: View {
 
     private func buildProfileHeader() -> some View {
         HStack(alignment: .center) {
-            HStack(alignment: .center, spacing: 8) {
-                Image(systemName: "slider.horizontal.3")
-                    .font(.subheadline)
-                    .foregroundStyle(MvpTheme.textPrimary)
-
-                Text("配置文件")
-                    .font(.callout.weight(.semibold))
-                    .foregroundStyle(MvpTheme.textPrimary)
-            }
+            Label("配置文件", systemImage: "slider.horizontal.3")
+                .font(.callout.weight(.semibold))
+                .foregroundStyle(MvpTheme.textPrimary)
 
             Spacer()
 
