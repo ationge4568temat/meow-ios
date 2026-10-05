@@ -667,7 +667,7 @@ struct MvpView: View {
             HStack(spacing: 8) {
                 Image(systemName: toastIconName(for: mvpManager.toastType))
                     .foregroundStyle(.white)
-                    .font(.footnote.weight(.semibold))
+                    .font(.footnote.weight(.medium))
                 Text(msg)
                     .font(.footnote.weight(.medium))
                     .foregroundStyle(.white)
