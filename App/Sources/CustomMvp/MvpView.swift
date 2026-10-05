@@ -530,7 +530,7 @@ struct MvpProfileCard: View {
 
             MvpActionButton(
                 title: "同步",
-                systemImage: "arrow.clockwise",
+                systemImage: "arrow.triangle.2.circlepath",
                 isLoading: mvpManager.isUpdating
             ) {
                 if let profile = activeProfile {
