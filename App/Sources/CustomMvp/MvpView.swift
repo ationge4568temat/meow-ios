@@ -519,19 +519,19 @@ struct MvpProfileCard: View {
                 HStack(alignment: .center, spacing: 6) {
                     ZStack {
                         Image(systemName: "arrow.triangle.2.circlepath")
-                            .font(.caption.weight(.bold))
+                            .font(.subheadline.weight(.bold))
                             .symbolRenderingMode(.hierarchical)
                             .opacity(mvpManager.isUpdating ? 0 : 1)
-                            
+
                         ProgressView()
                             .progressViewStyle(.circular)
                             .tint(.white)
-                            .scaleEffect(0.65) // 折中尺寸 (20 * 0.65 = 13) 确保视觉清晰
+                            .scaleEffect(0.75) // 匹配 15pt Icon (20 * 0.75 = 15)
                             .opacity(mvpManager.isUpdating ? 1 : 0)
                     }
                     .animation(.easeInOut(duration: 0.2), value: mvpManager.isUpdating)
                     Text("同步")
-                        .font(.footnote.weight(.bold))
+                        .font(.subheadline.weight(.bold))
                 }
                 .foregroundStyle(.white)
                 .padding(.horizontal, 16)
