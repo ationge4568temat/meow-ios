@@ -39,7 +39,7 @@ struct MvpHeaderBar: View {
                         Image(systemName: "doc.plaintext")
                             .font(.subheadline)
                             .foregroundStyle(MvpTheme.textSecondary)
-                            .opacity(exportingLogs ? 0 : 0.8)
+                            .opacity(exportingLogs ? 0 : 0.9)
 
                         ProgressView()
                             .progressViewStyle(.circular)
@@ -286,20 +286,20 @@ struct MvpActionButton: View {
             HStack(alignment: .center, spacing: 6) {
                 ZStack {
                     Image(systemName: systemImage)
-                        .font(.subheadline)
+                        .font(.footnote)
                         .symbolRenderingMode(.hierarchical)
                         .opacity(isLoading ? 0 : 1)
 
                     ProgressView()
                         .progressViewStyle(.circular)
                         .tint(.white)
-                        .scaleEffect(0.75) // 匹配 15pt Icon (20 * 0.75 = 15)
+                        .scaleEffect(0.65) // 匹配 13pt Icon (20 * 0.65 = 13)
                         .opacity(isLoading ? 1 : 0)
                 }
                 .animation(.easeInOut(duration: 0.2), value: isLoading)
 
                 Text(title)
-                    .font(.subheadline.weight(.bold))
+                    .font(.subheadline.weight(.medium))
             }
             .foregroundStyle(.white)
             .frame(maxWidth: isFullWidth ? .infinity : nil)
@@ -415,7 +415,7 @@ struct MvpProfileCard: View {
                         Image(systemName: "arrow.counterclockwise")
                             .font(.caption)
                         Text("重置")
-                            .font(.footnote.weight(.semibold))
+                            .font(.footnote.weight(.medium))
                     }
                     .foregroundStyle(MvpTheme.dangerText)
                     .padding(.leading, 8)
@@ -436,7 +436,7 @@ struct MvpProfileCard: View {
                         Image(systemName: "chevron.up")
                             .font(.caption)
                         Text("收起")
-                            .font(.footnote.weight(.semibold))
+                            .font(.footnote.weight(.medium))
                     }
                     .foregroundStyle(MvpTheme.textSecondary)
                     .padding(.leading, 8)
