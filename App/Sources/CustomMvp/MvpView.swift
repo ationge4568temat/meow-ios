@@ -128,10 +128,10 @@ struct MvpToggleSwitch: View {
                     .opacity(isOn ? 0.0 : 1.0)
             }
             .frame(width: 86, height: 86)
-            .offset(x: isOn ? 34 : -34)
+            .offset(x: isOn ? 37 : -37)
             .animation(.spring(duration: 0.35, bounce: 0.25), value: isOn)
         }
-        .frame(width: 154, height: 86)
+        .frame(width: 160, height: 86)
         .padding(.vertical, 24)
         .sensoryFeedback(.impact, trigger: isOn)
         .onTapGesture {
@@ -267,7 +267,7 @@ struct MvpQuickInfoCards: View {
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(Color.black.opacity(0.05), lineWidth: 0.5)
+                .stroke(MvpTheme.cardBorder, lineWidth: 0.5)
         )
         .shadow(color: Color.black.opacity(0.02), radius: 12, x: 0, y: 3)
     }
@@ -350,7 +350,7 @@ struct MvpProfileCard: View {
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(Color.black.opacity(0.05), lineWidth: 0.5)
+                .stroke(MvpTheme.cardBorder, lineWidth: 0.5)
         )
         .shadow(color: Color.black.opacity(0.02), radius: 12, x: 0, y: 3)
         .task(id: activeProfile?.lastUpdated) {
@@ -432,7 +432,7 @@ struct MvpProfileCard: View {
                 .padding(.vertical, 12)
                 .focused(isInputFocused)
                 .background(MvpTheme.inputBg)
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
 
                 Button(action: {
                     if let pasted = UIPasteboard.general.string {
@@ -721,7 +721,7 @@ private struct MvpPrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .background(MvpTheme.activeColor)
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             .shadow(color: MvpTheme.activeColor.opacity(0.2), radius: 12, x: 0, y: configuration.isPressed ? 2 : 4)
             .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
             .opacity(configuration.isPressed ? 0.9 : 1.0)
