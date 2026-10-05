@@ -274,6 +274,44 @@ struct MvpQuickInfoCards: View {
 }
 
 @MainActor
+struct MvpActionButton: View {
+    let title: String
+    let systemImage: String
+    let isLoading: Bool
+    var isFullWidth: Bool = false
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(alignment: .center, spacing: 6) {
+                ZStack {
+                    Image(systemName: systemImage)
+                        .font(.subheadline.weight(.bold))
+                        .symbolRenderingMode(.hierarchical)
+                        .opacity(isLoading ? 0 : 1)
+
+                    ProgressView()
+                        .progressViewStyle(.circular)
+                        .tint(.white)
+                        .scaleEffect(0.75) // 匹配 15pt Icon (20 * 0.75 = 15)
+                        .opacity(isLoading ? 1 : 0)
+                }
+                .animation(.easeInOut(duration: 0.2), value: isLoading)
+
+                Text(title)
+                    .font(.subheadline.weight(.bold))
+            }
+            .foregroundStyle(.white)
+            .frame(maxWidth: isFullWidth ? .infinity : nil)
+            .padding(.horizontal, isFullWidth ? 0 : 16)
+            .padding(.vertical, isFullWidth ? 12 : 10)
+        }
+        .applyMvpPrimaryButtonStyle()
+        .disabled(isLoading)
+    }
+}
+
+@MainActor
 struct MvpProfileCard: View {
     let appModel: AppModel
     let activeProfile: Profile?
@@ -450,35 +488,17 @@ struct MvpProfileCard: View {
                 .padding(.trailing, 4)
             }
 
-            Button(action: {
+            MvpActionButton(
+                title: "下载并导入",
+                systemImage: "square.and.arrow.down.fill",
+                isLoading: mvpManager.isImporting,
+                isFullWidth: true
+            ) {
                 MvpView.log.info("Download and import button tapped")
                 Task {
                     await mvpManager.importConfig(url: urlInput, appModel: appModel)
                 }
-            }, label: {
-                HStack(alignment: .center, spacing: 8) {
-                    ZStack {
-                        Image(systemName: "square.and.arrow.down.fill")
-                            .font(.subheadline)
-                            .symbolRenderingMode(.hierarchical)
-                            .opacity(mvpManager.isImporting ? 0 : 1)
-                            
-                        ProgressView()
-                            .progressViewStyle(.circular)
-                            .tint(.white)
-                            .scaleEffect(0.75) // 匹配 15pt Icon (20 * 0.75 = 15)
-                            .opacity(mvpManager.isImporting ? 1 : 0)
-                    }
-                    .animation(.easeInOut(duration: 0.2), value: mvpManager.isImporting)
-                    Text("下载并导入")
-                        .font(.subheadline.weight(.bold))
-                }
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-            })
-            .applyMvpPrimaryButtonStyle()
-            .disabled(mvpManager.isImporting)
+            }
         }
     }
 
@@ -508,37 +528,18 @@ struct MvpProfileCard: View {
 
             Spacer()
 
-            Button(action: {
+            MvpActionButton(
+                title: "同步",
+                systemImage: "arrow.triangle.2.circlepath",
+                isLoading: mvpManager.isUpdating
+            ) {
                 if let profile = activeProfile {
                     MvpView.log.info("Update subscription button tapped for profile: \(profile.name, privacy: .public)")
                     Task {
                         await mvpManager.updateSubscription(appModel: appModel, activeProfile: profile)
                     }
                 }
-            }, label: {
-                HStack(alignment: .center, spacing: 6) {
-                    ZStack {
-                        Image(systemName: "arrow.triangle.2.circlepath")
-                            .font(.subheadline.weight(.bold))
-                            .symbolRenderingMode(.hierarchical)
-                            .opacity(mvpManager.isUpdating ? 0 : 1)
-
-                        ProgressView()
-                            .progressViewStyle(.circular)
-                            .tint(.white)
-                            .scaleEffect(0.75) // 匹配 15pt Icon (20 * 0.75 = 15)
-                            .opacity(mvpManager.isUpdating ? 1 : 0)
-                    }
-                    .animation(.easeInOut(duration: 0.2), value: mvpManager.isUpdating)
-                    Text("同步")
-                        .font(.subheadline.weight(.bold))
-                }
-                .foregroundStyle(.white)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
-            })
-            .applyMvpPrimaryButtonStyle()
-            .disabled(mvpManager.isUpdating)
+            }
         }
     }
 }
