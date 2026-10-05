@@ -7,7 +7,7 @@ enum MvpTheme: Sendable {
     static let bgPrimary = Color(red: 0xF8 / 255.0, green: 0xFA / 255.0, blue: 0xFC / 255.0) // #F8FAFC
     static let cardBg = Color.white // #FFFFFF
     static let cardBorder = Color.black.opacity(0.05) // #000000 5% (0x0D000000)
-    static let borderColor = Color.black.opacity(0.04) // #000000 4% (0x08000000)，接近卡片边框与阴影的柔和分界线
+    static let borderColor = Color.black.opacity(0.03) // #000000 3% (0x08000000)，接近卡片边框与阴影的柔和分界线
 
     // Primary Active & Accent Colors (Emerald Green #10B981)
     static let activeColor = Color(red: 16 / 255.0, green: 185 / 255.0, blue: 129 / 255.0) // #10B981
