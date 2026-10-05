@@ -286,7 +286,7 @@ struct MvpActionButton: View {
             HStack(alignment: .center, spacing: 6) {
                 ZStack {
                     Image(systemName: systemImage)
-                        .font(.subheadline.weight(.bold))
+                        .font(.subheadline)
                         .symbolRenderingMode(.hierarchical)
                         .opacity(isLoading ? 0 : 1)
 
