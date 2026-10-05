@@ -6,7 +6,8 @@ enum MvpTheme: Sendable {
     // Backgrounds & Surface Card Colors
     static let bgPrimary = Color(red: 0xF8 / 255.0, green: 0xFA / 255.0, blue: 0xFC / 255.0) // #F8FAFC
     static let cardBg = Color.white // #FFFFFF
-    static let borderColor = Color(red: 0xE2 / 255.0, green: 0xE8 / 255.0, blue: 0xF0 / 255.0) // #E2E8F0
+    static let cardBorder = Color.black.opacity(0.05) // #000000 5% (0x0D000000)
+    static let borderColor = Color.black.opacity(0.08) // #000000 8% (0x14000000)
 
     // Primary Active & Accent Colors (Emerald Green #10B981)
     static let activeColor = Color(red: 16 / 255.0, green: 185 / 255.0, blue: 129 / 255.0) // #10B981
@@ -18,11 +19,12 @@ enum MvpTheme: Sendable {
     // Additional UI Colors
     static let dangerColor = Color(red: 239 / 255.0, green: 68 / 255.0, blue: 68 / 255.0) // #EF4444
     static let dangerText = Color(red: 248 / 255.0, green: 113 / 255.0, blue: 113 / 255.0) // #F87171 (soft red)
-    static let inputBg = Color(red: 244 / 255.0, green: 245 / 255.0, blue: 248 / 255.0) // #F4F5F8
+    static let inputBg = Color(red: 0xF9 / 255.0, green: 0xFA / 255.0, blue: 0xFB / 255.0) // #F9FAFB
 
     // Typography Colors
     static let textPrimary = Color(red: 0x0F / 255.0, green: 0x17 / 255.0, blue: 0x2A / 255.0) // #0F172A
     static let textSecondary = Color(red: 0x64 / 255.0, green: 0x74 / 255.0, blue: 0x8B / 255.0) // #64748B
+    static let textMuted = Color(red: 0x94 / 255.0, green: 0xA3 / 255.0, blue: 0xB8 / 255.0) // #94A3B8
 
     // Toast & Warning Colors
     static let toastBg = Color(red: 0x1E / 255.0, green: 0x29 / 255.0, blue: 0x3B / 255.0) // #1E293B
