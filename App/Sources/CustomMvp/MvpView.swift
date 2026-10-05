@@ -279,6 +279,7 @@ struct MvpActionButton: View {
     let systemImage: String
     let isLoading: Bool
     var isFullWidth: Bool = false
+    var iconScale: CGFloat = 1.0
     let action: () -> Void
 
     var body: some View {
@@ -288,6 +289,7 @@ struct MvpActionButton: View {
                     Image(systemName: systemImage)
                         .font(.subheadline)
                         .symbolRenderingMode(.hierarchical)
+                        .scaleEffect(iconScale)
                         .opacity(isLoading ? 0 : 1)
 
                     ProgressView()
@@ -296,6 +298,7 @@ struct MvpActionButton: View {
                         .scaleEffect(0.75) // 匹配 15pt Icon (20 * 0.75 = 15)
                         .opacity(isLoading ? 1 : 0)
                 }
+                .frame(width: 16, height: 16)
                 .animation(.easeInOut(duration: 0.2), value: isLoading)
 
                 Text(title)
@@ -530,7 +533,7 @@ struct MvpProfileCard: View {
 
             MvpActionButton(
                 title: "同步",
-                systemImage: "arrow.triangle.2.circlepath",
+                systemImage: "arrow.2.circlepath",
                 isLoading: mvpManager.isUpdating
             ) {
                 if let profile = activeProfile {
