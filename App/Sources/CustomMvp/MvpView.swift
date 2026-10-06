@@ -284,6 +284,8 @@ struct MvpActionButton: View {
     var progressScale: CGFloat = 0.8 // 默认匹配 16pt 菊花 (20 * 0.8 = 16)，置于 18 槽位中上下左右各留 1pt，完美整数对齐
     var iconSlotSize: CGFloat = 18 // 固定图标与菊花对齐槽位，确保中心点绝对重合
     var spacing: CGFloat = 6
+    var leadingPadding: CGFloat = 16 // 默认水平边距 16pt，支持自定义实现微观光学平衡
+    var trailingPadding: CGFloat = 16
     let action: () -> Void
 
     var body: some View {
@@ -309,7 +311,8 @@ struct MvpActionButton: View {
             }
             .foregroundStyle(.white)
             .frame(maxWidth: isFullWidth ? .infinity : nil)
-            .padding(.horizontal, isFullWidth ? 0 : 16)
+            .padding(.leading, isFullWidth ? 0 : leadingPadding)
+            .padding(.trailing, isFullWidth ? 0 : trailingPadding)
             .padding(.vertical, isFullWidth ? 12 : 10)
         }
         .applyMvpPrimaryButtonStyle()
@@ -518,6 +521,7 @@ struct MvpProfileCard: View {
                     .font(.callout.weight(.medium))
                     .foregroundStyle(MvpTheme.textPrimary)
                     .lineLimit(1)
+                    .frame(height: 22) // 锁定 22pt 槽位高(默认行高21+1)，使整体高度自然达到 76pt (22+12+18+6+18=76)，在外层 98pt 容器居中时留白精确为 11.0pt 整数，消除 0.5pt 亚像素渲染
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text("更新于：\(updateDateStr)")
@@ -545,7 +549,10 @@ struct MvpProfileCard: View {
                 textFont: .system(size: 15, weight: .medium),
                 progressScale: 0.7, // 匹配 14pt 菊花 (20 * 0.7 = 14)，置于 16 槽位中完美整数边距
                 iconSlotSize: 16,
-                spacing: 5
+                spacing: 5,
+                // 光学平衡：左侧 16pt 槽位内置 12pt 镂空图标(留白感+2pt)，右侧为实体文字笔画，故微调为 leading: 15, trailing: 17 抹平 2pt 光学差
+                leadingPadding: 15,
+                trailingPadding: 17
             ) {
                 if let profile = activeProfile {
                     MvpView.log.info("Update subscription button tapped for profile: \(profile.name, privacy: .public)")
