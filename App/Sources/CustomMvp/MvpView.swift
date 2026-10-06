@@ -35,7 +35,7 @@ struct MvpHeaderBar: View {
                 Button(action: {
                     onExportLogs()
                 }, label: {
-                    ZStack {
+                    ZStack(alignment: .center) {
                         Image(systemName: "doc.plaintext")
                             .font(.subheadline)
                             .foregroundStyle(MvpTheme.textSecondary)
@@ -47,7 +47,8 @@ struct MvpHeaderBar: View {
                             .opacity(exportingLogs ? 1 : 0)
                     }
                     .animation(.easeInOut(duration: 0.2), value: exportingLogs)
-                    .frame(width: 36, height: 36)
+                    .frame(width: 16, height: 16)
+                    .frame(width: 36, height: 36, alignment: .trailing)
                     .contentShape(Rectangle())
                 })
                 .buttonStyle(.plain)
@@ -417,7 +418,8 @@ struct MvpProfileCard: View {
                         mvpManager.showInputArea = true
                     }
                 }, label: {
-                    HStack(spacing: 5) {
+                    // 强迫症优化：使用 .firstTextBaseline 让图标与文字基线完美平齐
+                    HStack(alignment: .firstTextBaseline, spacing: 5) {
                         Image(systemName: "arrow.counterclockwise")
                             .font(.caption.weight(.medium))
                         Text("重置")
@@ -426,7 +428,7 @@ struct MvpProfileCard: View {
                     // 视觉补偿：向左微调 0.5pt 抵消图标自带空白，同时保持外部盒子绝对对称
                     .offset(x: -0.5)
                     .foregroundStyle(MvpTheme.dangerText)
-                    .padding(.horizontal, 8.5)
+                    .padding(.horizontal, 8)
                     .frame(height: 30)
                     .background(MvpTheme.dangerColor.opacity(0.05))
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
@@ -439,7 +441,8 @@ struct MvpProfileCard: View {
                         mvpManager.showInputArea = false
                     }
                 }, label: {
-                    HStack(spacing: 5) {
+                    // 强迫症优化：使用 .firstTextBaseline 让图标与文字基线完美平齐
+                    HStack(alignment: .firstTextBaseline, spacing: 5) {
                         Image(systemName: "chevron.up")
                             .font(.caption.weight(.medium))
                         Text("收起")
@@ -448,7 +451,7 @@ struct MvpProfileCard: View {
                     // 视觉补偿：向左微调 0.5pt 抵消图标自带空白，同时保持外部盒子绝对对称
                     .offset(x: -0.5)
                     .foregroundStyle(MvpTheme.textSecondary)
-                    .padding(.horizontal, 8.5)
+                    .padding(.horizontal, 8)
                     .frame(height: 30)
                     .background(MvpTheme.inactiveBadgeBg.opacity(0.35))
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
@@ -503,8 +506,7 @@ struct MvpProfileCard: View {
                 systemImage: "square.and.arrow.down.fill",
                 isLoading: mvpManager.isImporting,
                 isFullWidth: true,
-                iconFont: .subheadline.weight(.medium),
-                progressScale: 0.75 // 匹配 15pt Icon (20 * 0.75 = 15)
+                iconFont: .subheadline.weight(.medium)
             ) {
                 MvpView.log.info("Download and import button tapped")
                 Task {
@@ -681,7 +683,8 @@ struct MvpView: View {
     private func buildToastOverlay(msg: String) -> some View {
         VStack {
             Spacer()
-            HStack(spacing: 8) {
+            // 强迫症优化：使用 .firstTextBaseline 替代默认居中，确保图标与文字的基线绝对平齐
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Image(systemName: toastIconName(for: mvpManager.toastType))
                     .foregroundStyle(.white)
                     .font(.footnote.weight(.medium))
