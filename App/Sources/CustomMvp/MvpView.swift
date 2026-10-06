@@ -267,7 +267,7 @@ struct MvpQuickInfoCards: View {
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(MvpTheme.cardBorder, lineWidth: 0.5)
+                .strokeBorder(MvpTheme.cardBorder, lineWidth: 0.5)
         )
         .shadow(color: Color.black.opacity(0.02), radius: 12, x: 0, y: 3)
     }
@@ -394,7 +394,7 @@ struct MvpProfileCard: View {
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(MvpTheme.cardBorder, lineWidth: 0.5)
+                .strokeBorder(MvpTheme.cardBorder, lineWidth: 0.5)
         )
         .shadow(color: Color.black.opacity(0.02), radius: 12, x: 0, y: 3)
         .task(id: activeProfile?.lastUpdated) {
@@ -491,7 +491,7 @@ struct MvpProfileCard: View {
                         .contentShape(Rectangle())
                 })
                 .buttonStyle(.plain)
-                .padding(.trailing, 4)
+                .padding(.trailing, 5.5)
             }
 
             MvpActionButton(
@@ -527,7 +527,7 @@ struct MvpProfileCard: View {
                         
                     Text(versionDisplay)
                         .font(.footnote)
-                        .fontDesign(.rounded)
+                        .monospacedDigit()
                         .foregroundStyle(MvpTheme.textSecondary)
                         .lineLimit(1)
                         .id(versionDisplay)
