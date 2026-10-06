@@ -473,10 +473,10 @@ struct MvpProfileCard: View {
             .textInputAutocapitalization(.never)
             .autocorrectionDisabled()
             .keyboardType(.URL)
-            // 左边距 14pt
+            // 左边距 14pt：文本起始位置距离左边框 14pt
             .padding(.leading, 14)
-            // 右边距 44pt：为右侧 32pt 宽按钮(右边距 6pt)保留 38pt 空间，外加 6pt 呼吸间隔 (38 + 6 = 44)
-            .padding(.trailing, 44)
+            // 右边距 38pt：刚好在 32pt 宽按钮(右边距 6pt)的左边缘(6 + 32 = 38)，文字到图标视觉间距精准保持 8pt 黄金呼吸感
+            .padding(.trailing, 38)
             .padding(.vertical, 12)
             .focused(isInputFocused)
             .background(MvpTheme.inputBg)
