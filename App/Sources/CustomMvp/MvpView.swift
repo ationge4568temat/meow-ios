@@ -47,7 +47,7 @@ struct MvpHeaderBar: View {
                             .opacity(exportingLogs ? 1 : 0)
                     }
                     .animation(.easeInOut(duration: 0.2), value: exportingLogs)
-                    .frame(width: 36, height: 36)
+                    .frame(width: 32, height: 36) // 宽度由 36 缩小至 32，使图标中心向右平移 2pt (距屏幕 36pt)，完美对齐下方卡片内按钮的右外边框！
                     .contentShape(Rectangle())
                 })
                 .buttonStyle(.plain)
