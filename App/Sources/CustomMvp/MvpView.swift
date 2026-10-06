@@ -552,7 +552,7 @@ struct MvpProfileCard: View {
                 spacing: 5,
                 // 光学平衡：左侧 16pt 槽位内置 12pt 镂空图标(留白感+2pt)，右侧为实体文字笔画，故微调为 leading: 15, trailing: 17 抹平 2pt 光学差
                 leadingPadding: 15,
-                trailingPadding: 17
+                trailingPadding: 16 // 16pt 即可
             ) {
                 if let profile = activeProfile {
                     MvpView.log.info("Update subscription button tapped for profile: \(profile.name, privacy: .public)")
