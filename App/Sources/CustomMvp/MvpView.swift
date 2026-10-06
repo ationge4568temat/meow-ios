@@ -279,6 +279,8 @@ struct MvpActionButton: View {
     let systemImage: String
     let isLoading: Bool
     var isFullWidth: Bool = false
+    var iconFont: Font = .subheadline.weight(.medium)
+    var progressScale: CGFloat = 0.75 // 默认匹配 15pt Icon (20 * 0.75 = 15)
     let action: () -> Void
 
     var body: some View {
@@ -286,14 +288,14 @@ struct MvpActionButton: View {
             HStack(alignment: .center, spacing: 6) {
                 ZStack {
                     Image(systemName: systemImage)
-                        .font(.footnote)
+                        .font(iconFont)
                         .symbolRenderingMode(.hierarchical)
                         .opacity(isLoading ? 0 : 1)
 
                     ProgressView()
                         .progressViewStyle(.circular)
                         .tint(.white)
-                        .scaleEffect(0.65) // 匹配 13pt Icon (20 * 0.65 = 13)
+                        .scaleEffect(progressScale)
                         .opacity(isLoading ? 1 : 0)
                 }
                 .animation(.easeInOut(duration: 0.2), value: isLoading)
@@ -413,7 +415,7 @@ struct MvpProfileCard: View {
                 }, label: {
                     HStack(spacing: 5) {
                         Image(systemName: "arrow.counterclockwise")
-                            .font(.caption)
+                            .font(.caption.weight(.medium))
                         Text("重置")
                             .font(.footnote.weight(.medium))
                     }
@@ -434,7 +436,7 @@ struct MvpProfileCard: View {
                 }, label: {
                     HStack(spacing: 5) {
                         Image(systemName: "chevron.up")
-                            .font(.caption)
+                            .font(.caption.weight(.medium))
                         Text("收起")
                             .font(.footnote.weight(.medium))
                     }
@@ -492,7 +494,9 @@ struct MvpProfileCard: View {
                 title: "下载并导入",
                 systemImage: "square.and.arrow.down.fill",
                 isLoading: mvpManager.isImporting,
-                isFullWidth: true
+                isFullWidth: true,
+                iconFont: .subheadline.weight(.medium),
+                progressScale: 0.75 // 匹配 15pt Icon (20 * 0.75 = 15)
             ) {
                 MvpView.log.info("Download and import button tapped")
                 Task {
@@ -531,7 +535,9 @@ struct MvpProfileCard: View {
             MvpActionButton(
                 title: "同步",
                 systemImage: "arrow.triangle.2.circlepath",
-                isLoading: mvpManager.isUpdating
+                isLoading: mvpManager.isUpdating,
+                iconFont: .caption.weight(.medium),
+                progressScale: 0.6 // 匹配 12pt Caption Icon (20 * 0.6 = 12)
             ) {
                 if let profile = activeProfile {
                     MvpView.log.info("Update subscription button tapped for profile: \(profile.name, privacy: .public)")
