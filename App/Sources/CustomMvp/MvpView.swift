@@ -48,7 +48,7 @@ struct MvpHeaderBar: View {
                     }
                     .animation(.easeInOut(duration: 0.2), value: exportingLogs)
                     .frame(width: 16, height: 16)
-                    .frame(width: 36, height: 36, alignment: .trailing)
+                    .frame(width: 36, height: 36)
                     .contentShape(Rectangle())
                 })
                 .buttonStyle(.plain)
@@ -418,15 +418,12 @@ struct MvpProfileCard: View {
                         mvpManager.showInputArea = true
                     }
                 }, label: {
-                    // 强迫症优化：使用 .firstTextBaseline 让图标与文字基线完美平齐
-                    HStack(alignment: .firstTextBaseline, spacing: 5) {
+                    HStack(alignment: .center, spacing: 5) {
                         Image(systemName: "arrow.counterclockwise")
                             .font(.caption.weight(.medium))
                         Text("重置")
                             .font(.footnote.weight(.medium))
                     }
-                    // 视觉补偿：向左微调 0.5pt 抵消图标自带空白，同时保持外部盒子绝对对称
-                    .offset(x: -0.5)
                     .foregroundStyle(MvpTheme.dangerText)
                     .padding(.horizontal, 8)
                     .frame(height: 30)
@@ -441,15 +438,12 @@ struct MvpProfileCard: View {
                         mvpManager.showInputArea = false
                     }
                 }, label: {
-                    // 强迫症优化：使用 .firstTextBaseline 让图标与文字基线完美平齐
-                    HStack(alignment: .firstTextBaseline, spacing: 5) {
+                    HStack(alignment: .center, spacing: 5) {
                         Image(systemName: "chevron.up")
                             .font(.caption.weight(.medium))
                         Text("收起")
                             .font(.footnote.weight(.medium))
                     }
-                    // 视觉补偿：向左微调 0.5pt 抵消图标自带空白，同时保持外部盒子绝对对称
-                    .offset(x: -0.5)
                     .foregroundStyle(MvpTheme.textSecondary)
                     .padding(.horizontal, 8)
                     .frame(height: 30)
@@ -475,10 +469,10 @@ struct MvpProfileCard: View {
             .textInputAutocapitalization(.never)
             .autocorrectionDisabled()
             .keyboardType(.URL)
-            // 左边距 14
+            // 左边距 14pt
             .padding(.leading, 14)
-            // 右边距 48：为右侧 32 宽的按钮留出空间，外加与右边缘 14 的对齐，以及 2pt 的安全间隔 (32 + 14 + 2 = 48)
-            .padding(.trailing, 48)
+            // 右边距 44pt：为右侧 32pt 宽按钮(右边距 6pt)保留 38pt 空间，外加 6pt 呼吸间隔 (38 + 6 = 44)
+            .padding(.trailing, 44)
             .padding(.vertical, 12)
             .focused(isInputFocused)
             .background(MvpTheme.inputBg)
@@ -497,8 +491,8 @@ struct MvpProfileCard: View {
                         .contentShape(Rectangle())
                 })
                 .buttonStyle(.plain)
-                // 右边距 14，与文本左边距 14 完美对称
-                .padding(.trailing, 14)
+                // 32 宽按钮内置约 16 宽图标(半边留白 8pt)，外加 6pt 右边距：8 + 6 = 14pt，与文本左边距 14pt 绝对对称
+                .padding(.trailing, 6)
             }
 
             MvpActionButton(
@@ -683,8 +677,7 @@ struct MvpView: View {
     private func buildToastOverlay(msg: String) -> some View {
         VStack {
             Spacer()
-            // 强迫症优化：使用 .firstTextBaseline 替代默认居中，确保图标与文字的基线绝对平齐
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
+            HStack(alignment: .center, spacing: 8) {
                 Image(systemName: toastIconName(for: mvpManager.toastType))
                     .foregroundStyle(.white)
                     .font(.footnote.weight(.medium))
