@@ -43,7 +43,7 @@ struct MvpHeaderBar: View {
 
                         ProgressView()
                             .progressViewStyle(.circular)
-                            .scaleEffect(0.75) // 匹配 15pt Icon (20 * 0.75 = 15)
+                            .scaleEffect(0.8) // 匹配 16pt 菊花 (20 * 0.8 = 16)，消除小数像素错位
                             .opacity(exportingLogs ? 1 : 0)
                     }
                     .animation(.easeInOut(duration: 0.2), value: exportingLogs)
@@ -281,7 +281,7 @@ struct MvpActionButton: View {
     var isFullWidth: Bool = false
     var iconFont: Font = .subheadline.weight(.medium)
     var textFont: Font = .subheadline.weight(.medium)
-    var progressScale: CGFloat = 0.75 // 默认匹配 15pt Icon (20 * 0.75 = 15)
+    var progressScale: CGFloat = 0.8 // 默认匹配 16pt 菊花 (20 * 0.8 = 16)，置于 18 槽位中上下左右各留 1pt，完美整数对齐
     var iconSlotSize: CGFloat = 18 // 固定图标与菊花对齐槽位，确保中心点绝对重合
     var spacing: CGFloat = 6
     let action: () -> Void
@@ -423,9 +423,10 @@ struct MvpProfileCard: View {
                         Text("重置")
                             .font(.footnote.weight(.medium))
                     }
+                    // 视觉补偿：向左微调 0.5pt 抵消图标自带空白，同时保持外部盒子绝对对称
+                    .offset(x: -0.5)
                     .foregroundStyle(MvpTheme.dangerText)
-                    .padding(.leading, 8)
-                    .padding(.trailing, 9)
+                    .padding(.horizontal, 8.5)
                     .frame(height: 30)
                     .background(MvpTheme.dangerColor.opacity(0.05))
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
@@ -444,9 +445,10 @@ struct MvpProfileCard: View {
                         Text("收起")
                             .font(.footnote.weight(.medium))
                     }
+                    // 视觉补偿：向左微调 0.5pt 抵消图标自带空白，同时保持外部盒子绝对对称
+                    .offset(x: -0.5)
                     .foregroundStyle(MvpTheme.textSecondary)
-                    .padding(.leading, 8)
-                    .padding(.trailing, 9)
+                    .padding(.horizontal, 8.5)
                     .frame(height: 30)
                     .background(MvpTheme.inactiveBadgeBg.opacity(0.35))
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
@@ -459,25 +461,26 @@ struct MvpProfileCard: View {
 
     private func buildImportState() -> some View {
         VStack(spacing: 12) {
-            ZStack(alignment: .trailing) {
-                TextField(
-                    "粘贴配置文件链接",
-                    text: $urlInput,
-                    prompt: Text("粘贴配置文件链接").foregroundStyle(MvpTheme.textSecondary)
-                )
-                .font(.footnote)
-                .foregroundStyle(MvpTheme.textPrimary)
-                .tint(MvpTheme.activeColor)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .keyboardType(.URL)
-                .padding(.leading, 14)
-                .padding(.trailing, 40)
-                .padding(.vertical, 12)
-                .focused(isInputFocused)
-                .background(MvpTheme.inputBg)
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-
+            TextField(
+                "粘贴配置文件链接",
+                text: $urlInput,
+                prompt: Text("粘贴配置文件链接").foregroundStyle(MvpTheme.textSecondary)
+            )
+            .font(.footnote)
+            .foregroundStyle(MvpTheme.textPrimary)
+            .tint(MvpTheme.activeColor)
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
+            .keyboardType(.URL)
+            // 左边距 14
+            .padding(.leading, 14)
+            // 右边距 48：为右侧 32 宽的按钮留出空间，外加与右边缘 14 的对齐，以及 2pt 的安全间隔 (32 + 14 + 2 = 48)
+            .padding(.trailing, 48)
+            .padding(.vertical, 12)
+            .focused(isInputFocused)
+            .background(MvpTheme.inputBg)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .overlay(alignment: .trailing) {
                 Button(action: {
                     if let pasted = UIPasteboard.general.string {
                         urlInput = pasted.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -491,7 +494,8 @@ struct MvpProfileCard: View {
                         .contentShape(Rectangle())
                 })
                 .buttonStyle(.plain)
-                .padding(.trailing, 5.5)
+                // 右边距 14，与文本左边距 14 完美对称
+                .padding(.trailing, 14)
             }
 
             MvpActionButton(
@@ -542,7 +546,7 @@ struct MvpProfileCard: View {
                 isLoading: mvpManager.isUpdating,
                 iconFont: .system(size: 12, weight: .medium),
                 textFont: .system(size: 15, weight: .medium),
-                progressScale: 13.0 / 20.0, // 匹配 13pt 菊花 (20 * 0.65 = 13)
+                progressScale: 0.7, // 匹配 14pt 菊花 (20 * 0.7 = 14)，置于 16 槽位中完美整数边距
                 iconSlotSize: 16,
                 spacing: 5
             ) {
