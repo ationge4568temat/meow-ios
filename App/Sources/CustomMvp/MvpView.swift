@@ -39,7 +39,7 @@ struct MvpHeaderBar: View {
                         Image(systemName: "doc.plaintext")
                             .font(.subheadline)
                             .foregroundStyle(MvpTheme.textSecondary)
-                            .opacity(exportingLogs ? 0 : 0.9)
+                            .opacity(exportingLogs ? 0 : 0.7)
 
                         ProgressView()
                             .progressViewStyle(.circular)
