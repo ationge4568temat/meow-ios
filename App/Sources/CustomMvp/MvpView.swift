@@ -47,7 +47,6 @@ struct MvpHeaderBar: View {
                             .opacity(exportingLogs ? 1 : 0)
                     }
                     .animation(.easeInOut(duration: 0.2), value: exportingLogs)
-                    .frame(width: 16, height: 16)
                     .frame(width: 36, height: 36)
                     .contentShape(Rectangle())
                 })
@@ -425,7 +424,8 @@ struct MvpProfileCard: View {
                             .font(.footnote.weight(.medium))
                     }
                     .foregroundStyle(MvpTheme.dangerText)
-                    .padding(.horizontal, 8)
+                    .padding(.leading, 8)
+                    .padding(.trailing, 9) // 视觉补偿
                     .frame(height: 30)
                     .background(MvpTheme.dangerColor.opacity(0.05))
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
@@ -445,7 +445,8 @@ struct MvpProfileCard: View {
                             .font(.footnote.weight(.medium))
                     }
                     .foregroundStyle(MvpTheme.textSecondary)
-                    .padding(.horizontal, 8)
+                    .padding(.leading, 8)
+                    .padding(.trailing, 9) // 视觉补偿
                     .frame(height: 30)
                     .background(MvpTheme.inactiveBadgeBg.opacity(0.35))
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
