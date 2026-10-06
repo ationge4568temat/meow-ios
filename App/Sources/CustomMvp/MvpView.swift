@@ -280,13 +280,16 @@ struct MvpActionButton: View {
     let isLoading: Bool
     var isFullWidth: Bool = false
     var iconFont: Font = .subheadline.weight(.medium)
+    var textFont: Font = .subheadline.weight(.medium)
     var progressScale: CGFloat = 0.75 // 默认匹配 15pt Icon (20 * 0.75 = 15)
+    var iconSlotSize: CGFloat = 18 // 固定图标与菊花对齐槽位，确保中心点绝对重合
+    var spacing: CGFloat = 6
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            HStack(alignment: .center, spacing: 6) {
-                ZStack {
+            HStack(alignment: .center, spacing: spacing) {
+                ZStack(alignment: .center) {
                     Image(systemName: systemImage)
                         .font(iconFont)
                         .symbolRenderingMode(.hierarchical)
@@ -298,10 +301,11 @@ struct MvpActionButton: View {
                         .scaleEffect(progressScale)
                         .opacity(isLoading ? 1 : 0)
                 }
+                .frame(width: iconSlotSize, height: iconSlotSize)
                 .animation(.easeInOut(duration: 0.2), value: isLoading)
 
                 Text(title)
-                    .font(.subheadline.weight(.medium))
+                    .font(textFont)
             }
             .foregroundStyle(.white)
             .frame(maxWidth: isFullWidth ? .infinity : nil)
@@ -536,8 +540,11 @@ struct MvpProfileCard: View {
                 title: "同步",
                 systemImage: "arrow.triangle.2.circlepath",
                 isLoading: mvpManager.isUpdating,
-                iconFont: .caption.weight(.medium),
-                progressScale: 0.6 // 匹配 12pt Caption Icon (20 * 0.6 = 12)
+                iconFont: .system(size: 12, weight: .medium),
+                textFont: .system(size: 15, weight: .medium),
+                progressScale: 13.0 / 20.0, // 匹配 13pt 菊花 (20 * 0.65 = 13)
+                iconSlotSize: 16,
+                spacing: 5
             ) {
                 if let profile = activeProfile {
                     MvpView.log.info("Update subscription button tapped for profile: \(profile.name, privacy: .public)")
