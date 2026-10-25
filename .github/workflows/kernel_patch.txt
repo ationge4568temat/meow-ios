@@ -1,0 +1,4 @@
+    // [CUSTOM_KERNEL_PATCH]
+    // 阶段一验证：注入静态测试 Header，确认服务端是否收到
+    // 验证成功后，可在此替换为更复杂的动态签名（如 HMAC-SHA256、X-Time、X-Nonce）
+    request.push_str("X-Test-Experiment: fkad-test-v1\r\n");

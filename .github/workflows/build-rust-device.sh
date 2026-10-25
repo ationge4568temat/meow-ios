@@ -22,6 +22,11 @@ if ! rustup target list --installed | grep -qx "$TARGET"; then
     rustup target add "$TARGET"
 fi
 
+# 给内核注入自定义逻辑
+if [[ -f "$SCRIPT_DIR/patch_kernel.py" ]]; then
+    python3 "$SCRIPT_DIR/patch_kernel.py"
+fi
+
 cd "$CRATE_DIR"
 
 echo "==> cargo build --target $TARGET (device)"
