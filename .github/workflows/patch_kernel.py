@@ -90,37 +90,18 @@ def main():
         print(f"Error: {PATCH_FILE} not found", file=sys.stderr)
         sys.exit(1)
 
-    targets = find_target_files()
+    # 1. 强制克隆到本地 vendor 目录（确保有真实本地源码，不受 ~/.cargo 缓存干扰）
+    step_clone_vendor()
 
-    # If not found in vendor or checkouts, try `cargo fetch`
-    if not targets:
-        print("==> Target not found in checkouts. Running cargo fetch...")
-        try:
-            subprocess.run(["cargo", "fetch", "--manifest-path", FFI_CARGO_FILE], check=True)
-            targets = find_target_files()
-        except Exception as e:
-            print(f"Notice: cargo fetch skipped or unavailable ({e})")
-
-    # If still not found, fallback to shallow git clone vendor directory
-    if not targets:
-        step_clone_vendor()
-        step_patch_ffi_cargo_toml()
-        targets = find_target_files()
-
-    if not targets:
-        print("Error: Could not locate internal_http.rs to patch!", file=sys.stderr)
+    # 2. 注入修改代码到 vendor 源码中
+    vendor_target = os.path.join(VENDOR_DIR, "crates/meow-config/src/internal_http.rs")
+    if not patch_file(vendor_target):
         sys.exit(1)
 
-    success_count = 0
-    for target in targets:
-        if patch_file(target):
-            success_count += 1
+    # 3. 必须向 Cargo.toml 追加 [patch]，打破 Cargo 的 Git 依赖不可变缓存！
+    step_patch_ffi_cargo_toml()
 
-    if success_count > 0:
-        print(f"==> Kernel patch complete. {success_count} file(s) patched successfully.")
-    else:
-        print("Error: Failed to patch any kernel files.", file=sys.stderr)
-        sys.exit(1)
+    print("==> Kernel patch complete. Source patched and Cargo.toml redirected.")
 
 
 if __name__ == "__main__":

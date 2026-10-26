@@ -29,6 +29,9 @@ fi
 
 cd "$CRATE_DIR"
 
+# 强制清理 meow-config 缓存，确保 patch 后的源码必定重新编译！
+cargo clean -p meow-config 2>/dev/null || true
+
 echo "==> cargo build --target $TARGET (device)"
 cargo build --release --target "$TARGET"
 
