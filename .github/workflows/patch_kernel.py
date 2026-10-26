@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import sys
+import time
 import shutil
 import subprocess
 
@@ -59,10 +60,12 @@ def patch_file(target_file):
 
     if "// [CUSTOM_KERNEL_PATCH]" in content:
         print(f"==> Notice: {target_file} is already patched.")
+        now = time.time()
+        os.utime(target_file, (now, now))
         return True
 
     if TARGET_CODE not in content:
-        print(f"Error: TARGET_CODE anchor not found in {target_file}", file=sys.stderr)
+        print(f"==> Skipping revision without anchor: {target_file}")
         return False
 
     replacement = patch_code + "\n\n" + TARGET_CODE
@@ -70,6 +73,12 @@ def patch_file(target_file):
 
     with open(target_file, "w", encoding="utf-8") as f:
         f.write(new_content)
+
+    now = time.time()
+    os.utime(target_file, (now, now))
+    lib_rs = os.path.join(os.path.dirname(target_file), "lib.rs")
+    if os.path.exists(lib_rs):
+        os.utime(lib_rs, (now, now))
 
     print(f"==> Successfully patched {target_file}!")
     return True

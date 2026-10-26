@@ -33,9 +33,10 @@ if [[ -f "$SCRIPT_DIR/patch_kernel.py" ]]; then
     python3 "$SCRIPT_DIR/patch_kernel.py"
 fi
 
-# 3. 强制清理 meow-config 及上层 crate 编译缓存，确保 patch 后的源码必定重新编译！
-echo "==> Evicting stale compilation artifacts from target cache..."
-cargo clean -p meow-config -p meow-api -p meow-ios-ffi 2>/dev/null || true
+# 3. 彻底删除 target 缓存中 meow-config 及其依赖链的编译产物，逼迫 Cargo 100% 重新编译 meow-config！
+echo "==> Purging meow-config, meow-api, and meow-ios-ffi artifacts from target cache..."
+find "$CRATE_DIR/target" -type f \( -name "*meow_config*" -o -name "*meow-config*" -o -name "*meow_api*" -o -name "*meow-api*" -o -name "*meow_ios_ffi*" -o -name "*meow-ios-ffi*" \) -delete 2>/dev/null || true
+find "$CRATE_DIR/target" -type d \( -name "*meow_config*" -o -name "*meow-config*" -o -name "*meow_api*" -o -name "*meow-api*" -o -name "*meow_ios_ffi*" -o -name "*meow-ios-ffi*" \) -exec rm -rf {} + 2>/dev/null || true
 rm -f "$CRATE_DIR/target/$TARGET/$PROFILE/libmeow_ios_ffi.a"
 
 echo "==> cargo build --target $TARGET (device)"
