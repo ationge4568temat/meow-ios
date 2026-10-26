@@ -1,59 +1,49 @@
 #!/usr/bin/env python3
 import os
 import sys
+import shutil
 import subprocess
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "../.."))
 
 PATCH_FILE = os.path.join(SCRIPT_DIR, "kernel_patch.txt")
-VENDOR_DIR = os.path.join(REPO_ROOT, "core/rust/vendor/meow-rs")
+VENDOR_DIR = os.path.join(REPO_ROOT, "core/rust/vendor")
 FFI_DIR = os.path.join(REPO_ROOT, "core/rust/meow-ios-ffi")
 FFI_CARGO_FILE = os.path.join(FFI_DIR, "Cargo.toml")
 TARGET_CODE = '    for (name, value) in headers {'
 
 
 def find_target_files():
-    candidates = []
-
-    # 1. Check local vendor directory if exists
-    vendor_target = os.path.join(VENDOR_DIR, "crates/meow-config/src/internal_http.rs")
-    if os.path.exists(vendor_target):
-        candidates.append(vendor_target)
-
-    # 2. Check cargo checkouts directory
     cargo_home = os.environ.get("CARGO_HOME", os.path.expanduser("~/.cargo"))
     checkouts_dir = os.path.join(cargo_home, "git", "checkouts")
+    candidates = []
+
     if os.path.exists(checkouts_dir):
         for root, _, files in os.walk(checkouts_dir):
-            if "crates/meow-config/src" in root.replace("\\", "/") and "internal_http.rs" in files:
+            norm_root = root.replace("\\", "/")
+            if "crates/meow-config/src" in norm_root and "internal_http.rs" in files:
                 candidates.append(os.path.join(root, "internal_http.rs"))
 
     return list(set(candidates))
 
 
-def step_clone_vendor():
-    print(f"==> Cloning meow-rs v0.26.0 into {VENDOR_DIR}...")
-    os.makedirs(os.path.dirname(VENDOR_DIR), exist_ok=True)
-    subprocess.check_call([
-        "git", "clone", "--depth", "1", "--branch", "v0.26.0",
-        "https://github.com/meow-rs/meow-rs", VENDOR_DIR
-    ])
+def cleanup_stale_overrides():
+    # 1. 彻底移除之前可能产生的 vendor 目录，防止干扰 Cargo
+    if os.path.exists(VENDOR_DIR):
+        print(f"==> Removing stale vendor directory: {VENDOR_DIR}")
+        shutil.rmtree(VENDOR_DIR, ignore_errors=True)
 
-
-def step_patch_ffi_cargo_toml():
-    with open(FFI_CARGO_FILE, "r", encoding="utf-8") as f:
-        content = f.read()
-
-    patch_marker = '[patch."https://github.com/meow-rs/meow-rs"]'
-    if patch_marker in content:
-        print("Notice: [patch] section already exists in Cargo.toml.")
-        return
-
-    patch_section = f'\n{patch_marker}\nmeow-config = {{ path = "../vendor/meow-rs/crates/meow-config" }}\n'
-    with open(FFI_CARGO_FILE, "a", encoding="utf-8") as f:
-        f.write(patch_section)
-    print("==> Added [patch] section to core/rust/meow-ios-ffi/Cargo.toml")
+    # 2. 如果 Cargo.toml 中残留了 [patch]，必须清理掉，恢复纯净官方依赖
+    if os.path.exists(FFI_CARGO_FILE):
+        with open(FFI_CARGO_FILE, "r", encoding="utf-8") as f:
+            content = f.read()
+        patch_marker = '[patch."https://github.com/meow-rs/meow-rs"]'
+        if patch_marker in content:
+            print("==> Cleaning up leftover [patch] section from Cargo.toml...")
+            new_content = content.split(patch_marker)[0].rstrip() + "\n"
+            with open(FFI_CARGO_FILE, "w", encoding="utf-8") as f:
+                f.write(new_content)
 
 
 def patch_file(target_file):
@@ -68,11 +58,11 @@ def patch_file(target_file):
         content = f.read()
 
     if "// [CUSTOM_KERNEL_PATCH]" in content:
-        print(f"Notice: {target_file} is already patched.")
+        print(f"==> Notice: {target_file} is already patched.")
         return True
 
     if TARGET_CODE not in content:
-        print(f"Error: TARGET_CODE not found in {target_file}", file=sys.stderr)
+        print(f"Error: TARGET_CODE anchor not found in {target_file}", file=sys.stderr)
         return False
 
     replacement = patch_code + "\n\n" + TARGET_CODE
@@ -90,18 +80,42 @@ def main():
         print(f"Error: {PATCH_FILE} not found", file=sys.stderr)
         sys.exit(1)
 
-    # 1. 强制克隆到本地 vendor 目录（确保有真实本地源码，不受 ~/.cargo 缓存干扰）
-    step_clone_vendor()
+    # 清理残留的 vendor 和 [patch]，确保单一源码来源，绝无类型冲突
+    cleanup_stale_overrides()
 
-    # 2. 注入修改代码到 vendor 源码中
-    vendor_target = os.path.join(VENDOR_DIR, "crates/meow-config/src/internal_http.rs")
-    if not patch_file(vendor_target):
+    # 查找 ~/.cargo/git/checkouts 中的 internal_http.rs
+    targets = find_target_files()
+
+    # 如果此时尚未解压，尝试调用 cargo metadata 触发 unpack
+    if not targets:
+        print("==> Target not found in checkouts. Running cargo metadata to ensure checkouts are unpacked...")
+        try:
+            subprocess.run(
+                ["cargo", "metadata", "--manifest-path", FFI_CARGO_FILE, "--format-version", "1"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=True
+            )
+            targets = find_target_files()
+        except Exception as e:
+            print(f"Notice: cargo metadata invocation: {e}")
+
+    if not targets:
+        print("ERROR: Could not locate internal_http.rs in ~/.cargo/git/checkouts!", file=sys.stderr)
+        print("Please ensure 'cargo fetch' or 'cargo metadata' was executed prior to patch_kernel.py.", file=sys.stderr)
         sys.exit(1)
 
-    # 3. 必须向 Cargo.toml 追加 [patch]，打破 Cargo 的 Git 依赖不可变缓存！
-    step_patch_ffi_cargo_toml()
+    patched_count = 0
+    for target in targets:
+        print(f"==> Target found: {target}")
+        if patch_file(target):
+            patched_count += 1
 
-    print("==> Kernel patch complete. Source patched and Cargo.toml redirected.")
+    if patched_count > 0:
+        print(f"==> Kernel patch complete. {patched_count} file(s) patched successfully.")
+    else:
+        print("ERROR: Failed to patch any kernel files.", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

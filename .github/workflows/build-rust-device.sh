@@ -22,15 +22,21 @@ if ! rustup target list --installed | grep -qx "$TARGET"; then
     rustup target add "$TARGET"
 fi
 
-# 给内核注入自定义逻辑
+cd "$CRATE_DIR"
+
+# 1. 确保所有依赖已下载并解压到 ~/.cargo/git/checkouts
+echo "==> Fetching cargo dependencies..."
+cargo fetch --target "$TARGET"
+
+# 2. 给内核注入自定义逻辑（直接在 ~/.cargo/git/checkouts 中就地 patch）
 if [[ -f "$SCRIPT_DIR/patch_kernel.py" ]]; then
     python3 "$SCRIPT_DIR/patch_kernel.py"
 fi
 
-cd "$CRATE_DIR"
-
-# 强制清理 meow-config 缓存，确保 patch 后的源码必定重新编译！
-cargo clean -p meow-config 2>/dev/null || true
+# 3. 强制清理 meow-config 及上层 crate 编译缓存，确保 patch 后的源码必定重新编译！
+echo "==> Evicting stale compilation artifacts from target cache..."
+cargo clean -p meow-config -p meow-api -p meow-ios-ffi 2>/dev/null || true
+rm -f "$CRATE_DIR/target/$TARGET/$PROFILE/libmeow_ios_ffi.a"
 
 echo "==> cargo build --target $TARGET (device)"
 cargo build --release --target "$TARGET"
