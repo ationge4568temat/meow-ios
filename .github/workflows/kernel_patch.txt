@@ -1,4 +1,69 @@
     // [CUSTOM_KERNEL_PATCH]
-    // 阶段一验证：注入静态测试 Header，确认服务端是否收到
-    // 验证成功后，可在此替换为更复杂的动态签名（如 HMAC-SHA256、X-Time、X-Nonce）
-    request.push_str("X-Test-Experiment: fkad-test-v1\r\n");
+    {
+        let target_hosts: &[&str] = &[__KERNEL_RULE_HOSTS__];
+        let host_name = url.host_str().unwrap_or("");
+        let is_target = target_hosts.iter().any(|&target| target.eq_ignore_ascii_case(host_name));
+
+        if is_target {
+            let mut auth_val: Option<String> = None;
+            let mut hwid_val: Option<String> = None;
+            for (k, v) in url.query_pairs() {
+                if k == "auth" && !v.is_empty() {
+                    auth_val = Some(v.into_owned());
+                } else if k == "hwid" && !v.is_empty() {
+                    hwid_val = Some(v.into_owned());
+                }
+            }
+
+            if let (Some(auth), Some(hwid)) = (auth_val, hwid_val) {
+                extern "C" {
+                    fn arc4random_buf(buf: *mut u8, nbytes: usize);
+                    fn CCHmac(
+                        alg: u32,
+                        key: *const u8,
+                        key_len: usize,
+                        data: *const u8,
+                        data_len: usize,
+                        mac_out: *mut u8,
+                    );
+                }
+                const K_CC_HMAC_ALG_SHA256: u32 = 2;
+                const CC_SHA256_DIGEST_LENGTH: usize = 32;
+
+                let now_ms = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map(|d| d.as_millis())
+                    .unwrap_or(0);
+                let t_str = now_ms.to_string();
+
+                let mut nonce_bytes = [0u8; 16];
+                unsafe {
+                    arc4random_buf(nonce_bytes.as_mut_ptr(), 16);
+                }
+                let nonce = nonce_bytes.iter().map(|b| format!("{:02x}", b)).collect::<String>();
+
+                let salt = "__KERNEL_SIGN_SALT__";
+                let sign_payload = format!("{}{}{}{}{}", auth, hwid, t_str, nonce, url.path());
+                let mut mac_out = [0u8; CC_SHA256_DIGEST_LENGTH];
+
+                unsafe {
+                    CCHmac(
+                        K_CC_HMAC_ALG_SHA256,
+                        salt.as_bytes().as_ptr(),
+                        salt.as_bytes().len(),
+                        sign_payload.as_bytes().as_ptr(),
+                        sign_payload.as_bytes().len(),
+                        mac_out.as_mut_ptr(),
+                    );
+                }
+                let sign = mac_out.iter().map(|b| format!("{:02x}", b)).collect::<String>();
+
+                request.push_str(&format!("X-Auth: {}\r\n", auth));
+                request.push_str(&format!("X-HWID: {}\r\n", hwid));
+                request.push_str(&format!("X-Time: {}\r\n", t_str));
+                request.push_str(&format!("X-Nonce: {}\r\n", nonce));
+                request.push_str(&format!("X-Sign: {}\r\n", sign));
+                request.push_str("X-Client-Ver: 1.0\r\n");
+            }
+        }
+    }

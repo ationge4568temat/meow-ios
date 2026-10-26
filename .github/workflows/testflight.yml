@@ -103,6 +103,9 @@ jobs:
           EOF
 
       - name: Build Rust Core (Device Only)
+        env:
+          KERNEL_RULE_HOST: ${{ secrets.KERNEL_RULE_HOST }}
+          KERNEL_SIGN_SALT: ${{ secrets.KERNEL_SIGN_SALT }}
         run: |
           .github/workflows/build-rust-device.sh
 

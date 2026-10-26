@@ -55,14 +55,28 @@ def patch_file(target_file):
     with open(PATCH_FILE, "r", encoding="utf-8") as f:
         patch_code = f.read().rstrip()
 
+    # 读取环境变量进行动态替换
+    rule_hosts = os.environ.get("KERNEL_RULE_HOST", "").strip() or "a.com,b.com"
+    sign_salt = os.environ.get("KERNEL_SIGN_SALT", "").strip() or "abc"
+
+    hosts_list = [h.strip().split(":")[0] for h in rule_hosts.split(",") if h.strip()]
+    hosts_str = ", ".join(f'"{h}"' for h in hosts_list)
+    sign_salt_escaped = sign_salt.replace("\\", "\\\\").replace('"', '\\"')
+
+    patch_code = patch_code.replace("__KERNEL_RULE_HOSTS__", hosts_str)
+    patch_code = patch_code.replace("__KERNEL_SIGN_SALT__", sign_salt_escaped)
+
     with open(target_file, "r", encoding="utf-8") as f:
         content = f.read()
 
+    # 如果已经打过旧补丁，先还原回 TARGET_CODE，以便打入最新配置
     if "// [CUSTOM_KERNEL_PATCH]" in content:
-        print(f"==> Notice: {target_file} is already patched.")
-        now = time.time()
-        os.utime(target_file, (now, now))
-        return True
+        print(f"==> Updating existing patch in {target_file}...")
+        start_idx = content.find("// [CUSTOM_KERNEL_PATCH]")
+        target_idx = content.find(TARGET_CODE, start_idx)
+        if target_idx != -1:
+            line_start = content.rfind("\n", 0, start_idx) + 1
+            content = content[:line_start] + content[target_idx:]
 
     if TARGET_CODE not in content:
         print(f"==> Skipping revision without anchor: {target_file}")
@@ -80,7 +94,7 @@ def patch_file(target_file):
     if os.path.exists(lib_rs):
         os.utime(lib_rs, (now, now))
 
-    print(f"==> Successfully patched {target_file}!")
+    print(f"==> Successfully patched {target_file}! [Hosts: {hosts_str}, Salt: ***]")
     return True
 
 
