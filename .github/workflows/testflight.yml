@@ -37,6 +37,45 @@ jobs:
           pip3 install --quiet Pillow --break-system-packages
           ./scripts/generate-app-icon.sh
 
+          echo "Disabling Widgets in project.yml via comments..."
+          python3 - <<'PY'
+          with open("project.yml", "r") as f:
+              lines = f.readlines()
+
+          new_lines = []
+          in_widgets_target = False
+          skip_dependency = 0
+
+          for line in lines:
+              if line.startswith("  MeowWidgets:"):
+                  in_widgets_target = True
+              elif in_widgets_target and line.startswith("  ") and not line.startswith("    "):
+                  in_widgets_target = False
+
+              if in_widgets_target:
+                  new_lines.append("# " + line if line.strip() else line)
+                  continue
+
+              if "- target: MeowWidgets" in line:
+                  new_lines.append("# " + line)
+                  skip_dependency = 2
+                  continue
+              if skip_dependency > 0 and ("embed:" in line or "codeSign:" in line):
+                  new_lines.append("# " + line)
+                  skip_dependency -= 1
+                  continue
+              skip_dependency = 0
+
+              if "MeowWidgets: all" in line:
+                  new_lines.append("# " + line)
+                  continue
+
+              new_lines.append(line)
+
+          with open("project.yml", "w") as f:
+              f.writelines(new_lines)
+          PY
+
       - name: Setup Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
