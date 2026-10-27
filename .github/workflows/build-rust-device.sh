@@ -15,7 +15,7 @@ TARGET="aarch64-apple-ios"
 
 # Match the iOS deployment target declared in project.yml so the Rust static
 # libs and the Xcode targets agree on LC_BUILD_VERSION minos.
-export IPHONEOS_DEPLOYMENT_TARGET="${IPHONEOS_DEPLOYMENT_TARGET:-17.0}"
+export IPHONEOS_DEPLOYMENT_TARGET="${IPHONEOS_DEPLOYMENT_TARGET:-18.0}"
 
 if ! rustup target list --installed | grep -qx "$TARGET"; then
     echo "==> Adding rust target $TARGET"
