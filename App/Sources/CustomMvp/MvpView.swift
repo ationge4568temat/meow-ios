@@ -407,7 +407,7 @@ struct MvpProfileCard: View {
 
     private func buildProfileHeader() -> some View {
         HStack(alignment: .center) {
-            Label("配置文件", systemImage: "slider.horizontal.3")
+            Label("配置文件", systemImage: "square.stack.3d.up")
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(MvpTheme.textPrimary)
 
