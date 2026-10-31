@@ -55,7 +55,7 @@ public enum MvpSigner: Sendable {
         let nowMs = Int64((Date().timeIntervalSince1970 * 1000).rounded())
         let tStr = String(nowMs)
         let nonce = generateNonce()
-        let path = components.percentEncodedPath.isEmpty ? "/" : components.percentEncodedPath
+        let path = resolvePath(from: components)
 
         // 待签名 Payload: auth + hwid + t_str + nonce + path
         let payload = "\(auth)\(hwid)\(tStr)\(nonce)\(path)"
@@ -105,5 +105,11 @@ public enum MvpSigner: Sendable {
             return bytes.map { String(format: "%02x", $0) }.joined()
         }
         return UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased()
+    }
+
+    /// 提取并标准化 URL 路径（保留末尾斜杠及原始百分号编码，空路径保底回退为 "/"）
+    public static func resolvePath(from components: URLComponents) -> String {
+        let rawPath = components.percentEncodedPath
+        return rawPath.isEmpty ? "/" : (rawPath.hasPrefix("/") ? rawPath : "/" + rawPath)
     }
 }
