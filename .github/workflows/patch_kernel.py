@@ -98,6 +98,37 @@ def patch_file(target_file):
     return True
 
 
+def patch_swift_signer(hosts_str, sign_salt_escaped):
+    swift_file = os.path.join(REPO_ROOT, "App/Sources/CustomMvp/MvpSigner.swift")
+    if not os.path.exists(swift_file):
+        print(f"Notice: {swift_file} not found; skipping Swift signer patch.")
+        return False
+
+    with open(swift_file, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    begin_marker = "// [CUSTOM_SWIFT_CONFIG_BEGIN]"
+    end_marker = "// [CUSTOM_SWIFT_CONFIG_END]"
+    if begin_marker not in content or end_marker not in content:
+        print(f"Warning: Markers not found in {swift_file}; skipping.")
+        return False
+
+    start_idx = content.find(begin_marker)
+    end_idx = content.find(end_marker) + len(end_marker)
+
+    new_config = f"""{begin_marker}
+    private static let targetHosts: [String] = [{hosts_str}]
+    private static let signSalt: String = "{sign_salt_escaped}"
+    {end_marker}"""
+
+    new_content = content[:start_idx] + new_config + content[end_idx:]
+    with open(swift_file, "w", encoding="utf-8") as f:
+        f.write(new_content)
+
+    print(f"==> Successfully patched {swift_file}! [Hosts: {hosts_str}, Salt: ***]")
+    return True
+
+
 def main():
     if not os.path.exists(PATCH_FILE):
         print(f"Error: {PATCH_FILE} not found", file=sys.stderr)
@@ -139,6 +170,14 @@ def main():
     else:
         print("ERROR: Failed to patch any kernel files.", file=sys.stderr)
         sys.exit(1)
+
+    # 同步将 CI 环境变量更新至 Swift 端 MvpSigner.swift
+    rule_hosts = os.environ.get("KERNEL_RULE_HOST", "").strip() or "a.com,b.com"
+    sign_salt = os.environ.get("KERNEL_SIGN_SALT", "").strip() or "abc"
+    hosts_list = [h.strip().split(":")[0] for h in rule_hosts.split(",") if h.strip()]
+    hosts_str = ", ".join(f'"{h}"' for h in hosts_list)
+    sign_salt_escaped = sign_salt.replace("\\", "\\\\").replace('"', '\\"')
+    patch_swift_signer(hosts_str, sign_salt_escaped)
 
 
 if __name__ == "__main__":
