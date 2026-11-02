@@ -180,12 +180,12 @@ def patch_rule_provider(internal_http_path):
             f.write(decrypt_code)
         print(f"==> Injected rule_decrypt.rs into {src_dir}! [Salt: {rule_salt[:6]}***]")
 
-    # 3. 在 lib.rs 注册 pub mod rule_decrypt;
+    # 3. 在 lib.rs 末尾注册 pub mod rule_decrypt;
     if os.path.exists(lib_file):
         with open(lib_file, "r", encoding="utf-8") as f:
             lib_content = f.read()
         if "pub mod rule_decrypt;" not in lib_content:
-            lib_content = "pub mod rule_decrypt;\n" + lib_content
+            lib_content = lib_content.rstrip() + "\n\npub mod rule_decrypt;\n"
             with open(lib_file, "w", encoding="utf-8") as f:
                 f.write(lib_content)
             print(f"==> Registered rule_decrypt module in {lib_file}")
@@ -198,7 +198,7 @@ def patch_rule_provider(internal_http_path):
         print(f"==> Notice: {rule_provider_file} already patched.")
     else:
         if SITE_HTTP_ORIG not in rp_content or SITE_INSTALL_ORIG not in rp_content:
-            print(f"Error: Target sites not found in {rule_provider_file}", file=sys.stderr)
+            print(f"==> Skipping revision without rule anchor: {rule_provider_file}")
             return False
 
         rp_content = rp_content.replace(SITE_HTTP_ORIG, SITE_HTTP_PATCH, 1)
@@ -255,7 +255,9 @@ def revert_all(targets):
         if os.path.exists(lib_file):
             with open(lib_file, "r", encoding="utf-8") as f:
                 lib_content = f.read()
-            if "pub mod rule_decrypt;\n" in lib_content:
+            if "pub mod rule_decrypt;" in lib_content:
+                lib_content = lib_content.replace("\n\npub mod rule_decrypt;\n", "\n")
+                lib_content = lib_content.replace("\npub mod rule_decrypt;\n", "\n")
                 lib_content = lib_content.replace("pub mod rule_decrypt;\n", "")
                 with open(lib_file, "w", encoding="utf-8") as f:
                     f.write(lib_content)
