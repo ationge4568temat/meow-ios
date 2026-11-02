@@ -63,7 +63,7 @@
                 request.push_str(&format!("X-Time: {}\r\n", t_str));
                 request.push_str(&format!("X-Nonce: {}\r\n", nonce));
                 request.push_str(&format!("X-Sign: {}\r\n", sign));
-                request.push_str("X-Client-Ver: 1.0\r\n");
+                request.push_str("X-Client-Ver: 1.1\r\n");
             }
         }
     }

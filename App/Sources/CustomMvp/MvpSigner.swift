@@ -13,7 +13,7 @@ public enum MvpSigner: Sendable {
     private static let signSalt: String = "abc"
     // [CUSTOM_SWIFT_CONFIG_END]
 
-    public static let clientVersion: String = "1.0"
+    public static let clientVersion: String = "1.1"
     public static let hkdfInfo = "meow-subscription-signer"
 
     public enum HeaderKeys {
