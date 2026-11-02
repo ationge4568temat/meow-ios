@@ -68,7 +68,7 @@ pub fn extract_hwid_from_vehicle(vehicle_url: Option<&str>) -> String {
 /// 基于 HWID 派生 32 字节对称密钥：HMAC-SHA256(KERNEL_RULE_SALT, hwid)[:32]
 #[inline]
 fn derive_rule_key(hwid: &str) -> [u8; 32] {
-    let mut mac = HmacSha256::new_from_slice(KERNEL_RULE_SALT.as_bytes())
+    let mut mac = <HmacSha256 as Mac>::new_from_slice(KERNEL_RULE_SALT.as_bytes())
         .expect("HMAC initialization failed");
     mac.update(hwid.as_bytes());
     let result = mac.finalize().into_bytes();
@@ -108,7 +108,7 @@ pub fn decrypt_rule_payload(data: &[u8], hwid: &str) -> Result<Vec<u8>> {
 #[inline]
 pub fn get_honeypot_payload(magic: &[u8], behavior: RuleSetBehavior) -> &'static [u8] {
     if magic == EMRS_MAGIC {
-        if behavior == RuleSetBehavior::Ipcidr {
+        if behavior == RuleSetBehavior::IpCidr {
             HONEYPOT_MRS_IPCIDR_PAYLOAD
         } else {
             HONEYPOT_MRS_DOMAIN_PAYLOAD
